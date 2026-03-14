@@ -1,4 +1,9 @@
 const mongoose = require("mongoose");
+const {
+  PROJECT_PRIORITIES,
+  PROJECT_STATUSES,
+  SERVICE_TYPES,
+} = require("../utils/constants");
 
 const timelineSchema = new mongoose.Schema(
   {
@@ -18,8 +23,40 @@ const coordinatesSchema = new mongoose.Schema(
   { _id: false },
 );
 
+const paymentMilestoneSchema = new mongoose.Schema(
+  {
+    label: String,
+    amount: Number,
+    dueDate: Date,
+    status: {
+      type: String,
+      enum: ["Pending", "Scheduled", "Paid", "Overdue"],
+      default: "Pending",
+    },
+  },
+  { _id: false },
+);
+
+const quotationSchema = new mongoose.Schema(
+  {
+    amount: Number,
+    currency: {
+      type: String,
+      default: "USD",
+    },
+    summary: String,
+  },
+  { _id: false },
+);
+
 const projectSchema = new mongoose.Schema(
   {
+    projectCode: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
     title: {
       type: String,
       required: true,
@@ -39,16 +76,37 @@ const projectSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    category: {
+      type: String,
+      required: true,
+      default: "Planning Residential",
+    },
+    serviceType: {
+      type: String,
+      enum: SERVICE_TYPES,
+      default: "Planning Residential",
+    },
     summary: {
       type: String,
       required: true,
     },
+    description: {
+      type: String,
+      default: "",
+    },
     status: {
       type: String,
-      enum: ["Concept", "In Construction", "Completed"],
-      default: "Concept",
+      enum: PROJECT_STATUSES,
+      default: "PENDING",
     },
+    priority: {
+      type: String,
+      enum: PROJECT_PRIORITIES,
+      default: "MEDIUM",
+    },
+    deadline: Date,
     heroImage: String,
+    gallery: [String],
     year: String,
     area: String,
     duration: String,
@@ -59,10 +117,27 @@ const projectSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    mainArchitect: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
     client: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    createdByAdmin: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    readyForReviewAt: Date,
+    completedAt: Date,
+    reviewRequestedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    latestReportAt: Date,
+    quotation: quotationSchema,
+    paymentMilestones: [paymentMilestoneSchema],
     files: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -70,6 +145,7 @@ const projectSchema = new mongoose.Schema(
       },
     ],
     timeline: [timelineSchema],
+    tags: [String],
   },
   {
     timestamps: true,

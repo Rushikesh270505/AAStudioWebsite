@@ -1,11 +1,17 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const { buildAvatarUrl } = require("../utils/avatar");
+const { USER_ROLES } = require("../utils/constants");
 
 const userSchema = new mongoose.Schema(
   {
-    name: {
+    fullName: {
       type: String,
       required: true,
+      trim: true,
+    },
+    name: {
+      type: String,
       trim: true,
     },
     email: {
@@ -23,11 +29,33 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["architect", "client", "admin"],
+      enum: USER_ROLES,
       default: "client",
     },
     studioName: String,
     phone: String,
+    avatarSeed: {
+      type: String,
+      trim: true,
+    },
+    avatarUrl: {
+      type: String,
+      trim: true,
+    },
+    companyArchitectId: {
+      type: String,
+      trim: true,
+    },
+    specializationTags: [String],
+    bio: String,
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    onboardingCompleted: {
+      type: Boolean,
+      default: false,
+    },
     assignedProjects: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -39,6 +67,26 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+userSchema.pre("validate", function syncProfileFields(next) {
+  if (!this.fullName && this.name) {
+    this.fullName = this.name;
+  }
+
+  if (!this.name && this.fullName) {
+    this.name = this.fullName;
+  }
+
+  if (!this.avatarSeed && this.email) {
+    this.avatarSeed = `${this.email}-${Date.now()}`;
+  }
+
+  if (!this.avatarUrl && this.avatarSeed) {
+    this.avatarUrl = buildAvatarUrl(this.avatarSeed);
+  }
+
+  next();
+});
 
 userSchema.pre("save", async function hashPassword(next) {
   if (!this.isModified("password")) {

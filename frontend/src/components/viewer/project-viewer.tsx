@@ -3,9 +3,20 @@
 import { Suspense, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { ContactShadows, Environment, Html, OrbitControls } from "@react-three/drei";
+import type { Project } from "@/lib/platform-types";
 import { studioProjects } from "@/lib/site-data";
 import { ArchitectureModel } from "@/3dviewer/architecture-model";
 import { GLTFAsset } from "@/3dviewer/model-stage";
+
+type ViewerProject = Pick<Project, "slug" | "projectType" | "title" | "location" | "modelUrl">;
+
+const fallbackProjects: ViewerProject[] = studioProjects.map((project) => ({
+  slug: project.slug,
+  projectType: project.projectType,
+  title: project.title,
+  location: project.location,
+  modelUrl: project.modelUrl,
+}));
 
 function ViewerScene({ modelUrl }: { modelUrl?: string }) {
   return (
@@ -23,8 +34,9 @@ function ViewerScene({ modelUrl }: { modelUrl?: string }) {
   );
 }
 
-export function ProjectViewer() {
-  const [activeProject, setActiveProject] = useState(studioProjects[0]);
+export function ProjectViewer({ projects }: { projects?: ViewerProject[] }) {
+  const viewerProjects = projects?.length ? projects : fallbackProjects;
+  const [activeProject, setActiveProject] = useState(viewerProjects[0]);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[0.42fr_0.58fr]">
@@ -36,7 +48,7 @@ export function ProjectViewer() {
         </p>
 
         <div className="mt-6 grid gap-3">
-          {studioProjects.map((project) => (
+          {viewerProjects.map((project) => (
             <button
               key={project.slug}
               type="button"

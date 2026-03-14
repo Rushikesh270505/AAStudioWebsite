@@ -4,9 +4,14 @@ import { ArrowRight, Building2, Layers3, Move3D, Play } from "lucide-react";
 import { ContactForm } from "@/components/contact-form";
 import { ProjectCard } from "@/components/project-card";
 import { SectionHeading } from "@/components/section-heading";
+import { fetchProjects } from "@/lib/api";
 import { principles, services, studioProjects, studioStats } from "@/lib/site-data";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const featuredProjects = await fetchProjects().then((projects) => projects.slice(0, 3)).catch(() => []);
+
   return (
     <>
       <section className="section-pad pt-8">
@@ -94,10 +99,18 @@ export default function Home() {
             title="A portfolio system designed for image-led architectural narratives"
             description="Each project page combines plans, elevations, render galleries, walkthrough media, and interactive 3D experiences."
           />
-          <div className="mt-10 grid gap-6 lg:grid-cols-3">
-            {studioProjects.map((project) => (
-              <ProjectCard key={project.slug} project={project} />
-            ))}
+          <div className="mt-10">
+            {featuredProjects.length ? (
+              <div className="grid gap-6 lg:grid-cols-3">
+                {featuredProjects.map((project) => (
+                  <ProjectCard key={project.slug} project={project} />
+                ))}
+              </div>
+            ) : (
+              <div className="glass-panel rounded-[32px] p-8 text-sm text-[#5d5d5d]">
+                Featured projects will appear here once live records are published from the admin workspace.
+              </div>
+            )}
           </div>
         </div>
       </section>

@@ -38,6 +38,8 @@ const invoiceSchema = new mongoose.Schema(
       enum: ["Draft", "Scheduled", "Due", "Paid", "Overdue"],
       default: "Draft",
     },
+    notes: String,
+    paymentPhase: String,
     pdfUrl: String,
     lineItems: [lineItemSchema],
   },

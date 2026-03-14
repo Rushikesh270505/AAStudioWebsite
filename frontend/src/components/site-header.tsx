@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { motion } from "framer-motion";
 import { BrandMark } from "@/components/brand-mark";
+import { clearSession, getEmptySessionSnapshot, getWorkspacePath, readSessionSnapshot, subscribeToSession } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -20,7 +21,11 @@ const navItems = [
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const session = useSyncExternalStore(subscribeToSession, readSessionSnapshot, getEmptySessionSnapshot);
+  const sessionRole = session.role;
+  const sessionName = session.user?.fullName || session.user?.name || "";
 
   return (
     <header className="sticky top-0 z-50 px-4 pt-4">
@@ -51,18 +56,36 @@ export function SiteHeader() {
           </nav>
 
           <div className="hidden items-center gap-3 lg:flex">
-            <Link
-              href="/login"
-              className="rounded-full border border-[#c8a97e]/18 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.88),transparent_60%),linear-gradient(180deg,rgba(255,255,255,0.92),rgba(247,241,234,0.84))] px-4 py-2 text-sm text-[#444444] shadow-[inset_0_1px_0_rgba(255,255,255,0.82),0_10px_24px_rgba(17,17,17,0.05)] backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-[#c8a97e]/34 hover:text-[#111111] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_14px_30px_rgba(200,169,126,0.12)]"
-            >
-              Client login
-            </Link>
-            <Link
-              href="/dashboard"
-              className="rounded-full border border-[#c8a97e]/42 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.9),transparent_58%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,234,220,0.92)_58%,rgba(200,169,126,0.3))] px-5 py-2.5 text-sm font-medium text-[#111111] shadow-[inset_0_1px_0_rgba(255,255,255,0.86),0_12px_32px_rgba(200,169,126,0.18)] backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-[#c8a97e]/58 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_16px_36px_rgba(200,169,126,0.24)]"
-            >
-              Dashboard
-            </Link>
+            {sessionRole ? (
+              <>
+                <span className="rounded-full border border-[#c8a97e]/18 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.88),transparent_60%),linear-gradient(180deg,rgba(255,255,255,0.92),rgba(247,241,234,0.84))] px-4 py-2 text-sm text-[#444444] shadow-[inset_0_1px_0_rgba(255,255,255,0.82),0_10px_24px_rgba(17,17,17,0.05)]">
+                  {sessionName || "Signed in"}
+                </span>
+                <button
+                  type="button"
+                  className="rounded-full border border-[#c8a97e]/18 bg-white/80 px-4 py-2 text-sm text-[#444444]"
+                  onClick={() => {
+                    clearSession();
+                    router.push("/auth");
+                  }}
+                >
+                  Sign out
+                </button>
+                <Link
+                  href={getWorkspacePath(sessionRole as "public_user" | "client" | "architect" | "admin")}
+                  className="rounded-full border border-[#c8a97e]/42 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.9),transparent_58%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,234,220,0.92)_58%,rgba(200,169,126,0.3))] px-5 py-2.5 text-sm font-medium text-[#111111] shadow-[inset_0_1px_0_rgba(255,255,255,0.86),0_12px_32px_rgba(200,169,126,0.18)] backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-[#c8a97e]/58 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_16px_36px_rgba(200,169,126,0.24)]"
+                >
+                  Open workspace
+                </Link>
+              </>
+            ) : (
+              <Link
+                href="/auth"
+                className="rounded-full border border-[#c8a97e]/42 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.9),transparent_58%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,234,220,0.92)_58%,rgba(200,169,126,0.3))] px-5 py-2.5 text-sm font-medium text-[#111111] shadow-[inset_0_1px_0_rgba(255,255,255,0.86),0_12px_32px_rgba(200,169,126,0.18)] backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-[#c8a97e]/58 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_16px_36px_rgba(200,169,126,0.24)]"
+              >
+                Sign Up / Login
+              </Link>
+            )}
           </div>
 
           <button
@@ -100,18 +123,34 @@ export function SiteHeader() {
                 </Link>
               );
             })}
-            <Link
-              href="/login"
-              className="rounded-2xl border border-[#c8a97e]/14 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.88),transparent_60%),linear-gradient(180deg,rgba(255,255,255,0.9),rgba(247,241,234,0.82))] px-4 py-3 text-sm text-[#202020] shadow-[inset_0_1px_0_rgba(255,255,255,0.84),0_10px_22px_rgba(17,17,17,0.05)]"
-            >
-              Client login
-            </Link>
-            <Link
-              href="/dashboard"
-              className="rounded-2xl border border-[#c8a97e]/42 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.9),transparent_58%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,234,220,0.92)_58%,rgba(200,169,126,0.3))] px-4 py-3 text-sm font-medium text-[#111111] shadow-[inset_0_1px_0_rgba(255,255,255,0.86),0_12px_32px_rgba(200,169,126,0.18)]"
-            >
-              Open dashboard
-            </Link>
+            {sessionRole ? (
+              <>
+                <button
+                  type="button"
+                  className="rounded-2xl border border-[#c8a97e]/14 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.88),transparent_60%),linear-gradient(180deg,rgba(255,255,255,0.9),rgba(247,241,234,0.82))] px-4 py-3 text-left text-sm text-[#202020] shadow-[inset_0_1px_0_rgba(255,255,255,0.84),0_10px_22px_rgba(17,17,17,0.05)]"
+                  onClick={() => {
+                    clearSession();
+                    setIsOpen(false);
+                    router.push("/auth");
+                  }}
+                >
+                  Sign out
+                </button>
+                <Link
+                  href={getWorkspacePath(sessionRole as "public_user" | "client" | "architect" | "admin")}
+                  className="rounded-2xl border border-[#c8a97e]/42 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.9),transparent_58%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,234,220,0.92)_58%,rgba(200,169,126,0.3))] px-4 py-3 text-sm font-medium text-[#111111] shadow-[inset_0_1px_0_rgba(255,255,255,0.86),0_12px_32px_rgba(200,169,126,0.18)]"
+                >
+                  Open workspace
+                </Link>
+              </>
+            ) : (
+              <Link
+                href="/auth"
+                className="rounded-2xl border border-[#c8a97e]/42 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.9),transparent_58%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,234,220,0.92)_58%,rgba(200,169,126,0.3))] px-4 py-3 text-sm font-medium text-[#111111] shadow-[inset_0_1px_0_rgba(255,255,255,0.86),0_12px_32px_rgba(200,169,126,0.18)]"
+              >
+                Sign Up / Login
+              </Link>
+            )}
           </motion.nav>
         ) : null}
       </div>

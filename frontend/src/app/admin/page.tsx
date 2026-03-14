@@ -1,15 +1,5 @@
-import { AdminWorkspace } from "@/components/admin-workspace";
-
-export const metadata = {
-  title: "Admin",
-};
+import { redirect } from "next/navigation";
 
 export default function AdminPage() {
-  return (
-    <section className="section-pad">
-      <div className="container-shell">
-        <AdminWorkspace />
-      </div>
-    </section>
-  );
+  redirect("/admin/dashboard");
 }

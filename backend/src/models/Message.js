@@ -20,6 +20,12 @@ const messageSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    kind: {
+      type: String,
+      enum: ["CHAT", "SYSTEM"],
+      default: "CHAT",
+    },
+    attachmentUrl: String,
     readAt: Date,
   },
   {

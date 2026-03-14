@@ -4,9 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { motion } from "framer-motion";
-import type { ProjectData } from "@/lib/site-data";
+import type { Project } from "@/lib/platform-types";
 
-export function ProjectCard({ project }: { project: ProjectData }) {
+export function ProjectCard({ project }: { project: Project }) {
   return (
     <motion.article
       whileHover={{ y: -8 }}
@@ -14,13 +14,17 @@ export function ProjectCard({ project }: { project: ProjectData }) {
       className="glass-panel overflow-hidden rounded-[32px]"
     >
       <div className="relative h-72 overflow-hidden">
-        <Image
-          src={project.heroImage}
-          alt={project.title}
-          fill
-          className="object-cover transition-transform duration-700 hover:scale-105"
-          sizes="(max-width: 768px) 100vw, 50vw"
-        />
+        {project.heroImage ? (
+          <Image
+            src={project.heroImage}
+            alt={project.title}
+            fill
+            className="object-cover transition-transform duration-700 hover:scale-105"
+            sizes="(max-width: 768px) 100vw, 50vw"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(200,169,126,0.4),transparent_52%),linear-gradient(180deg,#252525_0%,#111111_100%)]" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
         <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between gap-3 text-white">
           <div>
@@ -39,7 +43,7 @@ export function ProjectCard({ project }: { project: ProjectData }) {
         <p className="text-sm leading-7 text-[#5d5d5d]">{project.summary}</p>
         <div className="mt-6 flex items-center justify-between">
           <div className="text-xs uppercase tracking-[0.24em] text-[#8f6532]">
-            {project.area} • {project.year}
+            {project.area || "Scope in progress"} {project.year ? `• ${project.year}` : ""}
           </div>
           <Link
             href={`/projects/${project.slug}`}

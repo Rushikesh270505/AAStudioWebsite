@@ -18,6 +18,10 @@ async function protect(req, res, next) {
       return res.status(401).json({ message: "User no longer exists." });
     }
 
+    if (!user.isActive) {
+      return res.status(403).json({ message: "This account has been deactivated." });
+    }
+
     req.user = user;
     return next();
   } catch (error) {

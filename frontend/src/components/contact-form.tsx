@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { submitContactLead } from "@/lib/api";
 
 export function ContactForm() {
   const [status, setStatus] = useState<string>("");
@@ -11,11 +12,26 @@ export function ContactForm() {
     setIsPending(true);
     setStatus("");
 
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    const form = event.currentTarget;
+    const formData = new FormData(form);
 
-    setStatus("Inquiry captured. Connect this form to your backend or CRM inbox for live submissions.");
-    setIsPending(false);
-    event.currentTarget.reset();
+    try {
+      const response = await submitContactLead({
+        fullName: String(formData.get("fullName") || ""),
+        email: String(formData.get("email") || ""),
+        phone: String(formData.get("phone") || ""),
+        projectType: String(formData.get("projectType") || ""),
+        budget: String(formData.get("budget") || ""),
+        message: String(formData.get("message") || ""),
+      });
+
+      setStatus(response.message);
+      form.reset();
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to capture your inquiry right now.");
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (
@@ -25,7 +41,7 @@ export function ContactForm() {
           Full name
           <input
             required
-            name="name"
+            name="fullName"
             className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
             placeholder="Your name"
           />
@@ -38,6 +54,14 @@ export function ContactForm() {
             name="email"
             className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
             placeholder="name@studio.com"
+          />
+        </label>
+        <label className="grid gap-2 text-sm text-[#3c3c3c]">
+          Phone / WhatsApp
+          <input
+            name="phone"
+            className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
+            placeholder="+91 98765 43210"
           />
         </label>
         <label className="grid gap-2 text-sm text-[#3c3c3c]">
@@ -78,7 +102,9 @@ export function ContactForm() {
       </label>
 
       <div className="mt-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <p className="text-sm text-[#5d5d5d]">{status || "Responses are framed around strategy, design scope, and delivery timing."}</p>
+        <p className="text-sm text-[#5d5d5d]">
+          {status || "Responses are stored in the studio CRM pipeline and surfaced inside the admin workspace for follow-up."}
+        </p>
         <button
           type="submit"
           disabled={isPending}

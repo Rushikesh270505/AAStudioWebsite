@@ -9,6 +9,11 @@ const fileRoutes = require("./routes/fileRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const invoiceRoutes = require("./routes/invoiceRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const contactRoutes = require("./routes/contactRoutes");
+const meetingRoutes = require("./routes/meetingRoutes");
+const siteVisitRoutes = require("./routes/siteVisitRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+const userRoutes = require("./routes/userRoutes");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
@@ -61,6 +66,11 @@ app.use("/api/files", fileRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/invoices", invoiceRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/contact", contactRoutes);
+app.use("/api/meetings", meetingRoutes);
+app.use("/api/site-visits", siteVisitRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/users", userRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

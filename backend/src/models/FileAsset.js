@@ -21,6 +21,11 @@ const fileAssetSchema = new mongoose.Schema(
     },
     mimeType: String,
     size: Number,
+    description: String,
+    version: {
+      type: Number,
+      default: 1,
+    },
     storageProvider: {
       type: String,
       enum: ["local", "s3", "cloudinary"],
