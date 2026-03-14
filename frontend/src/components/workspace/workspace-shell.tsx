@@ -31,20 +31,21 @@ export function WorkspaceShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const displayName = user.fullName || user.username || user.email;
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f7f4ee_0%,#f3f0ea_45%,#f8f6f2_100%)]">
       <div className="grid min-h-screen lg:grid-cols-[280px_1fr]">
-        <aside className="border-r border-black/6 bg-[rgba(255,255,255,0.64)] p-5 backdrop-blur-xl">
+        <aside className="border-r border-black/6 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.86),transparent_55%),linear-gradient(180deg,rgba(255,255,255,0.78),rgba(248,243,236,0.92))] p-5 backdrop-blur-xl">
           <Link href={getWorkspacePath(user.role)} className="glass-panel flex items-center gap-4 rounded-[28px] p-4">
             <img
               src={user.avatarUrl}
-              alt={user.fullName}
+              alt={displayName}
               className="h-14 w-14 rounded-full border border-black/8 object-cover"
             />
             <div>
               <p className="text-xs uppercase tracking-[0.24em] text-[#8f6532]">{user.role.replace(/_/g, " ")}</p>
-              <p className="display-title text-2xl text-[#111111]">{user.fullName}</p>
+              <p className="display-title text-2xl text-[#111111]">{displayName}</p>
             </div>
           </Link>
 

@@ -14,7 +14,7 @@ async function listMeetings(req, res) {
   }
 
   const meetings = await Meeting.find(query)
-    .populate("participants", "fullName name email role avatarUrl avatarSeed")
+    .populate("participants", "fullName name username email role avatarUrl avatarSeed")
     .sort({ scheduledAt: 1 });
 
   return res.json(meetings);
@@ -42,7 +42,7 @@ async function createMeeting(req, res) {
   );
 
   return res.status(201).json(
-    await Meeting.findById(meeting._id).populate("participants", "fullName name email role avatarUrl avatarSeed"),
+    await Meeting.findById(meeting._id).populate("participants", "fullName name username email role avatarUrl avatarSeed"),
   );
 }
 

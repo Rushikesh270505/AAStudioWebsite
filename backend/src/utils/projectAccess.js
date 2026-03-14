@@ -3,10 +3,10 @@ const ProjectCollaborator = require("../models/ProjectCollaborator");
 
 async function getProjectAccessSnapshot(projectId, user) {
   const project = await Project.findById(projectId)
-    .populate("client", "fullName name email role avatarUrl avatarSeed")
-    .populate("mainArchitect", "fullName name email role avatarUrl avatarSeed companyArchitectId")
-    .populate("architect", "fullName name email role avatarUrl avatarSeed companyArchitectId")
-    .populate("createdByAdmin", "fullName name email role avatarUrl avatarSeed")
+    .populate("client", "fullName name username email role avatarUrl avatarSeed")
+    .populate("mainArchitect", "fullName name username email role avatarUrl avatarSeed companyArchitectId")
+    .populate("architect", "fullName name username email role avatarUrl avatarSeed companyArchitectId")
+    .populate("createdByAdmin", "fullName name username email role avatarUrl avatarSeed")
     .populate("files");
 
   if (!project) {
@@ -15,7 +15,7 @@ async function getProjectAccessSnapshot(projectId, user) {
 
   const collaborators = await ProjectCollaborator.find({ project: project._id }).populate(
     "architect addedBy",
-    "fullName name email role avatarUrl avatarSeed companyArchitectId",
+    "fullName name username email role avatarUrl avatarSeed companyArchitectId",
   );
 
   const collaboratorIds = collaborators.map((item) => item.architect?._id?.toString()).filter(Boolean);

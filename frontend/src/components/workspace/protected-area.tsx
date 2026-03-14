@@ -12,11 +12,9 @@ type SessionState = {
 
 export function ProtectedArea({
   roles,
-  staffOnly = false,
   children,
 }: {
   roles: Role[];
-  staffOnly?: boolean;
   children: (session: SessionState) => React.ReactNode;
 }) {
   const router = useRouter();
@@ -25,14 +23,14 @@ export function ProtectedArea({
 
   useEffect(() => {
     if (!session.token || !session.user) {
-      router.replace(staffOnly ? "/staff-login" : "/auth");
+      router.replace("/auth");
       return;
     }
 
     if (!roles.includes(session.user.role)) {
       router.replace("/auth");
     }
-  }, [roles, router, session.token, session.user, staffOnly]);
+  }, [roles, router, session.token, session.user]);
 
   if (!hasAccess || !session.user) {
     return (

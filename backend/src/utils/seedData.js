@@ -17,11 +17,6 @@ function getSeedPassword(key) {
 
 const seedCredentials = [
   {
-    role: "Admin",
-    email: getSeedValue("SEED_ADMIN_EMAIL", "admin.demo@example.com"),
-    password: getSeedPassword("SEED_ADMIN_PASSWORD"),
-  },
-  {
     role: "Architect",
     email: getSeedValue("SEED_ARCHITECT_EMAIL", "architect.demo@example.com"),
     password: getSeedPassword("SEED_ARCHITECT_PASSWORD"),
@@ -40,18 +35,29 @@ const seedCredentials = [
 
 const users = [
   {
-    fullName: "Platform Admin",
-    name: "Platform Admin",
-    email: seedCredentials[0].email,
-    password: seedCredentials[0].password,
+    fullName: "Akhil Katari",
+    name: "Akhil Katari",
+    username: "admin@akhilkatari",
+    email: "akhil.admin@artandarchitecture.internal",
+    password: getSeedPassword("SEED_ADMIN_AKHIL_PASSWORD"),
+    role: "admin",
+    studioName: "Art and Architecture Studios",
+  },
+  {
+    fullName: "Rushikesh Katari",
+    name: "Rushikesh Katari",
+    username: "admin@rushikeshkatari",
+    email: "rushikesh.admin@artandarchitecture.internal",
+    password: getSeedPassword("SEED_ADMIN_RUSHIKESH_PASSWORD"),
     role: "admin",
     studioName: "Art and Architecture Studios",
   },
   {
     fullName: "Aarav Mehta",
     name: "Aarav Mehta",
-    email: seedCredentials[1].email,
-    password: seedCredentials[1].password,
+    username: "aarav.mehta",
+    email: seedCredentials[0].email,
+    password: seedCredentials[0].password,
     role: "architect",
     companyArchitectId: "ARCH-1001",
     specializationTags: ["Walkthrough", "3D Renders", "Exterior Design"],
@@ -60,6 +66,7 @@ const users = [
   {
     fullName: "Nisha Rao",
     name: "Nisha Rao",
+    username: "nisha.rao",
     email: "nisha.rao@example.com",
     password: getSeedPassword("SEED_ARCHITECT_PASSWORD_2"),
     role: "architect",
@@ -69,6 +76,7 @@ const users = [
   {
     fullName: "Kabir Shah",
     name: "Kabir Shah",
+    username: "kabir.shah",
     email: "kabir.shah@example.com",
     password: getSeedPassword("SEED_ARCHITECT_PASSWORD_3"),
     role: "architect",
@@ -78,6 +86,7 @@ const users = [
   {
     fullName: "Tara Iyer",
     name: "Tara Iyer",
+    username: "tara.iyer",
     email: "tara.iyer@example.com",
     password: getSeedPassword("SEED_ARCHITECT_PASSWORD_4"),
     role: "architect",
@@ -87,6 +96,7 @@ const users = [
   {
     fullName: "Rohan Bedi",
     name: "Rohan Bedi",
+    username: "rohan.bedi",
     email: "rohan.bedi@example.com",
     password: getSeedPassword("SEED_ARCHITECT_PASSWORD_5"),
     role: "architect",
@@ -96,14 +106,16 @@ const users = [
   {
     fullName: "Mira Kapoor",
     name: "Mira Kapoor",
-    email: seedCredentials[2].email,
-    password: seedCredentials[2].password,
+    username: "mira.kapoor",
+    email: seedCredentials[1].email,
+    password: seedCredentials[1].password,
     role: "client",
     phone: "+91 98765 11111",
   },
   {
     fullName: "Ishaan Patel",
     name: "Ishaan Patel",
+    username: "ishaan.patel",
     email: "ishaan.client@example.com",
     password: getSeedPassword("SEED_CLIENT_PASSWORD_2"),
     role: "client",
@@ -112,6 +124,7 @@ const users = [
   {
     fullName: "Sana Dsouza",
     name: "Sana Dsouza",
+    username: "sana.dsouza",
     email: "sana.client@example.com",
     password: getSeedPassword("SEED_CLIENT_PASSWORD_3"),
     role: "client",
@@ -120,8 +133,9 @@ const users = [
   {
     fullName: "Guest Onboarding",
     name: "Guest Onboarding",
-    email: seedCredentials[3].email,
-    password: seedCredentials[3].password,
+    username: "guest.onboarding",
+    email: seedCredentials[2].email,
+    password: seedCredentials[2].password,
     role: "public_user",
   },
 ];

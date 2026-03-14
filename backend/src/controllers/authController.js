@@ -4,6 +4,7 @@ const User = require("../models/User");
 const VerificationCode = require("../models/VerificationCode");
 const env = require("../config/env");
 const { buildAvatarUrl } = require("../utils/avatar");
+const { isAllowedAdminUsername } = require("../utils/adminAccounts");
 const { deliverOtp, generateOtpCode, normalizeRecipient } = require("../utils/otp");
 
 function signToken(id) {
@@ -18,6 +19,34 @@ function createHttpError(statusCode, message) {
 
 function isSupportedOtpChannel(channel) {
   return ["email", "phone"].includes(channel);
+}
+
+function normalizeIdentifier(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase();
+}
+
+function normalizeUsername(value) {
+  return normalizeIdentifier(value).replace(/\s+/g, "").replace(/[^a-z0-9@._-]/g, "");
+}
+
+function findUserByIdentifier(identifier) {
+  const normalizedIdentifier = normalizeIdentifier(identifier);
+
+  if (!normalizedIdentifier) {
+    return null;
+  }
+
+  return User.findOne({
+    $or: [{ email: normalizedIdentifier }, { username: normalizedIdentifier }],
+  });
+}
+
+function assertAdminAccountAllowed(user) {
+  if (user.role === "admin" && !isAllowedAdminUsername(user.username)) {
+    throw createHttpError(403, "This admin account is not authorized for the control panel.");
+  }
 }
 
 async function getVerifiedOtp(channel, recipient, purpose) {
@@ -35,6 +64,7 @@ function sanitizeUser(user) {
     id: user._id,
     fullName: user.fullName || user.name,
     name: user.name,
+    username: user.username,
     email: user.email,
     role: user.role,
     studioName: user.studioName,
@@ -49,8 +79,7 @@ function sanitizeUser(user) {
 
 async function register(req, res) {
   const {
-    fullName,
-    name,
+    username,
     email,
     password,
     role,
@@ -61,9 +90,10 @@ async function register(req, res) {
 
   const normalizedEmail = email?.trim().toLowerCase();
   const normalizedPhone = phone?.trim();
+  const normalizedUsername = normalizeUsername(username);
 
-  if (!normalizedEmail || !password || !(fullName || name) || !normalizedPhone) {
-    throw createHttpError(400, "Full name, email, phone number, and password are required.");
+  if (!normalizedUsername || !normalizedEmail || !password || !normalizedPhone) {
+    throw createHttpError(400, "Username, email, phone number, and password are required.");
   }
 
   const emailVerification = await getVerifiedOtp("email", normalizedEmail, "signup");
@@ -72,9 +102,10 @@ async function register(req, res) {
     throw createHttpError(400, "Verify your email OTP before creating the account.");
   }
 
-  const [existingEmailUser, existingPhoneUser] = await Promise.all([
+  const [existingEmailUser, existingPhoneUser, existingUsernameUser] = await Promise.all([
     User.findOne({ email: normalizedEmail }),
     User.findOne({ phone: normalizedPhone }),
+    User.findOne({ username: normalizedUsername }),
   ]);
 
   if (existingEmailUser) {
@@ -85,13 +116,18 @@ async function register(req, res) {
     throw createHttpError(400, "User already exists for this phone number.");
   }
 
+  if (existingUsernameUser) {
+    throw createHttpError(400, "That username is already taken.");
+  }
+
   const finalRole = role === "public_user" ? "public_user" : "client";
-  const resolvedName = fullName || name;
-  const resolvedSeed = avatarSeed || `${resolvedName}-${crypto.randomBytes(4).toString("hex")}`;
+  const resolvedName = normalizedUsername;
+  const resolvedSeed = avatarSeed || `${normalizedUsername}-${crypto.randomBytes(4).toString("hex")}`;
 
   const user = await User.create({
     fullName: resolvedName,
     name: resolvedName,
+    username: normalizedUsername,
     email: normalizedEmail,
     password,
     role: finalRole,
@@ -117,17 +153,25 @@ async function register(req, res) {
 }
 
 async function login(req, res) {
-  const { email, password } = req.body;
+  const { identifier, email, username, password } = req.body;
+  const resolvedIdentifier = identifier || email || username;
 
-  const user = await User.findOne({ email }).select("+password");
+  if (!resolvedIdentifier || !password) {
+    return res.status(400).json({ message: "Email/username and password are required." });
+  }
+
+  const lookup = findUserByIdentifier(resolvedIdentifier);
+  const user = lookup ? await lookup.select("+password") : null;
 
   if (!user || !(await user.comparePassword(password))) {
-    return res.status(401).json({ message: "Invalid email or password." });
+    return res.status(401).json({ message: "Invalid email/username or password." });
   }
 
   if (!user.isActive) {
     return res.status(403).json({ message: "Your account has been deactivated. Contact an administrator." });
   }
+
+  assertAdminAccountAllowed(user);
 
   const token = signToken(user._id.toString());
 
@@ -138,11 +182,18 @@ async function login(req, res) {
 }
 
 async function staffLogin(req, res) {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email }).select("+password");
+  const { identifier, email, username, password } = req.body;
+  const resolvedIdentifier = identifier || email || username;
+
+  if (!resolvedIdentifier || !password) {
+    return res.status(400).json({ message: "Email/username and password are required." });
+  }
+
+  const lookup = findUserByIdentifier(resolvedIdentifier);
+  const user = lookup ? await lookup.select("+password") : null;
 
   if (!user || !(await user.comparePassword(password))) {
-    return res.status(401).json({ message: "Invalid email or password." });
+    return res.status(401).json({ message: "Invalid email/username or password." });
   }
 
   if (!["architect", "admin"].includes(user.role)) {
@@ -153,6 +204,8 @@ async function staffLogin(req, res) {
     return res.status(403).json({ message: "Your staff account has been deactivated." });
   }
 
+  assertAdminAccountAllowed(user);
+
   const token = signToken(user._id.toString());
   return res.json({
     token,
@@ -161,7 +214,7 @@ async function staffLogin(req, res) {
 }
 
 async function forgotPassword(req, res) {
-  const { email } = req.body;
+  const email = normalizeIdentifier(req.body.email);
 
   if (!email) {
     return res.status(400).json({ message: "Email is required." });
@@ -171,8 +224,8 @@ async function forgotPassword(req, res) {
 
   return res.json({
     message: user
-      ? "Password reset request recorded. Connect an email provider to deliver reset links."
-      : "If an account exists for that email, a reset link will be sent.",
+      ? "Use the email OTP flow on the login form to sign in."
+      : "If an account exists for that email, you can request an OTP from the login form.",
   });
 }
 
@@ -190,17 +243,25 @@ async function requestOtp(req, res) {
   const normalizedRecipient = normalizeRecipient(channel, recipient);
 
   if (purpose === "signup") {
-    const existingUser = await User.findOne(
-      channel === "email" ? { email: normalizedRecipient } : { phone: normalizedRecipient },
-    );
+    const existingUser = await User.findOne(channel === "email" ? { email: normalizedRecipient } : { phone: normalizedRecipient });
 
     if (existingUser) {
       throw createHttpError(
         400,
-        channel === "email"
-          ? "An account already exists for this email."
-          : "An account already exists for this phone number.",
+        channel === "email" ? "An account already exists for this email." : "An account already exists for this phone number.",
       );
+    }
+  }
+
+  if (purpose === "login") {
+    if (channel !== "email") {
+      throw createHttpError(400, "Login OTP is only available over email.");
+    }
+
+    const existingUser = await User.findOne({ email: normalizedRecipient });
+
+    if (!existingUser) {
+      throw createHttpError(404, "No account was found for that email address.");
     }
   }
 
@@ -273,6 +334,53 @@ async function verifyOtp(req, res) {
   });
 }
 
+async function loginWithOtp(req, res) {
+  if (!req.body.email) {
+    throw createHttpError(400, "Email and OTP code are required.");
+  }
+
+  const normalizedEmail = normalizeRecipient("email", req.body.email);
+  const code = String(req.body.code || "").trim();
+
+  if (!normalizedEmail || !code) {
+    throw createHttpError(400, "Email and OTP code are required.");
+  }
+
+  const verification = await VerificationCode.findOne({
+    channel: "email",
+    recipient: normalizedEmail,
+    purpose: "login",
+    code,
+    verifiedAt: null,
+    expiresAt: { $gt: new Date() },
+  }).sort({ createdAt: -1 });
+
+  if (!verification) {
+    throw createHttpError(400, "Invalid or expired OTP.");
+  }
+
+  const user = await User.findOne({ email: normalizedEmail });
+
+  if (!user) {
+    throw createHttpError(404, "No account was found for that email address.");
+  }
+
+  if (!user.isActive) {
+    throw createHttpError(403, "Your account has been deactivated. Contact an administrator.");
+  }
+
+  assertAdminAccountAllowed(user);
+
+  verification.verifiedAt = new Date();
+  await verification.save();
+  await VerificationCode.deleteMany({ channel: "email", recipient: normalizedEmail, purpose: "login" });
+
+  return res.json({
+    token: signToken(user._id.toString()),
+    user: sanitizeUser(user),
+  });
+}
+
 async function getCurrentUser(req, res) {
   return res.json({
     user: sanitizeUser(req.user),
@@ -286,5 +394,6 @@ module.exports = {
   forgotPassword,
   requestOtp,
   verifyOtp,
+  loginWithOtp,
   getCurrentUser,
 };

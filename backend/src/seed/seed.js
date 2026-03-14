@@ -13,6 +13,7 @@ const Invite = require("../models/Invite");
 const ContactLead = require("../models/ContactLead");
 const AuditLog = require("../models/AuditLog");
 const { users, serviceCatalog, seedCredentials, imageSets } = require("../utils/seedData");
+const { ensureDefaultAdminAccounts } = require("../utils/adminAccounts");
 
 function slugify(value) {
   return value
@@ -41,9 +42,12 @@ async function seed() {
     AuditLog.deleteMany({}),
   ]);
 
-  const createdUsers = await User.create(users);
+  await User.create(users);
+  await ensureDefaultAdminAccounts(User);
 
-  const admin = createdUsers.find((user) => user.role === "admin");
+  const createdUsers = await User.find().sort({ createdAt: 1 });
+
+  const admin = createdUsers.find((user) => user.username === "admin@akhilkatari") || createdUsers.find((user) => user.role === "admin");
   const architects = createdUsers.filter((user) => user.role === "architect");
   const clients = createdUsers.filter((user) => user.role === "client");
 
@@ -294,6 +298,7 @@ async function seed() {
   seedCredentials.forEach((credential) => {
     console.log(`- ${credential.role}: ${credential.email} / ${credential.password}`);
   });
+  console.log("- Admin usernames: admin@AkhilKatari / admin@RushikeshKatari");
   process.exit(0);
 }
 

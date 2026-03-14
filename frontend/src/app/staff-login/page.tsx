@@ -1,15 +1,9 @@
-import { AuthPanel } from "@/components/auth/auth-panel";
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "Staff Login",
 };
 
 export default function StaffLoginPage() {
-  return (
-    <section className="section-pad">
-      <div className="container-shell">
-        <AuthPanel staffMode />
-      </div>
-    </section>
-  );
+  redirect("/auth");
 }

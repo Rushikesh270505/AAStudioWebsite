@@ -12,9 +12,9 @@ function AdminDashboardContent({ token, user }: { token: string; user: UserProfi
   const [payload, setPayload] = useState<AdminDashboardPayload | null>(null);
   const [leads, setLeads] = useState<ContactLead[]>([]);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("Admin controls are connected to live dashboard analytics and inquiry capture.");
+  const [message, setMessage] = useState("Create staff accounts, review incoming work, and keep the studio board organized.");
   const [architectForm, setArchitectForm] = useState({
-    fullName: "",
+    username: "",
     email: "",
     phone: "",
     companyArchitectId: "",
@@ -50,9 +50,11 @@ function AdminDashboardContent({ token, user }: { token: string; user: UserProfi
 
     try {
       const response = await createArchitectAccount(token, architectForm);
-      setMessage(`Architect account created for ${response.user.fullName}. Temporary password: ${response.temporaryPassword}`);
+      setMessage(
+        `Architect account created for ${response.user.username || response.user.fullName}. Temporary password: ${response.temporaryPassword}`,
+      );
       setArchitectForm({
-        fullName: "",
+        username: "",
         email: "",
         phone: "",
         companyArchitectId: "",
@@ -69,7 +71,7 @@ function AdminDashboardContent({ token, user }: { token: string; user: UserProfi
     <WorkspaceShell
       user={user}
       title="Admin control center"
-      description="Monitor the full pipeline, manage architect staffing, review work queues, and capture new website inquiries directly from the live platform."
+      description="Monitor the full pipeline, manage architect staffing, review new inquiries, and keep approvals moving from one polished workspace."
       navItems={[{ href: "/admin/dashboard", label: "Dashboard" }]}
       notifications={payload?.notifications || []}
     >
@@ -104,14 +106,14 @@ function AdminDashboardContent({ token, user }: { token: string; user: UserProfi
               )}
             </div>
 
-            <div className="glass-panel rounded-[28px] p-6">
-              <p className="eyebrow">Create architect account</p>
+            <div className="glass-panel rounded-[28px] border border-white/50 p-6 shadow-[0_20px_50px_rgba(17,17,17,0.05)]">
+              <p className="eyebrow">Create staff account</p>
               <form onSubmit={handleCreateArchitect} className="mt-5 grid gap-3">
                 <input
                   required
-                  value={architectForm.fullName}
-                  onChange={(event) => setArchitectForm((current) => ({ ...current, fullName: event.target.value }))}
-                  placeholder="Full name"
+                  value={architectForm.username}
+                  onChange={(event) => setArchitectForm((current) => ({ ...current, username: event.target.value }))}
+                  placeholder="Username"
                   className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none focus:border-[#c8a97e]"
                 />
                 <input
@@ -143,6 +145,29 @@ function AdminDashboardContent({ token, user }: { token: string; user: UserProfi
           </div>
 
           <div className="grid gap-6 xl:grid-cols-[0.5fr_0.5fr]">
+            <div className="glass-panel rounded-[28px] border border-white/50 p-6 shadow-[0_20px_50px_rgba(17,17,17,0.05)]">
+              <p className="eyebrow">Studio staff</p>
+              <div className="mt-5 grid gap-3">
+                {payload.users.filter((item) => ["admin", "architect"].includes(item.role)).length ? (
+                  payload.users
+                    .filter((item) => ["admin", "architect"].includes(item.role))
+                    .map((staffMember) => (
+                      <div key={`${staffMember.email}-${staffMember.role}`} className="rounded-[22px] border border-black/8 bg-white/65 p-4">
+                        <div className="flex items-center justify-between gap-4">
+                          <div>
+                            <p className="font-medium text-[#111111]">{staffMember.username || staffMember.fullName}</p>
+                            <p className="mt-1 text-sm text-[#5d5d5d]">{staffMember.email}</p>
+                          </div>
+                          <p className="text-xs uppercase tracking-[0.22em] text-[#8f6532]">{staffMember.role}</p>
+                        </div>
+                      </div>
+                    ))
+                ) : (
+                  <p className="text-sm text-[#5d5d5d]">No staff accounts are available yet.</p>
+                )}
+              </div>
+            </div>
+
             <div className="glass-panel rounded-[28px] p-6">
               <p className="eyebrow">Website inquiries</p>
               <div className="mt-5 grid gap-3">
@@ -218,7 +243,7 @@ function AdminDashboardContent({ token, user }: { token: string; user: UserProfi
 
 export function AdminDashboard() {
   return (
-    <ProtectedArea roles={["admin"]} staffOnly>
+    <ProtectedArea roles={["admin"]}>
       {({ token, user }) => <AdminDashboardContent token={token} user={user} />}
     </ProtectedArea>
   );

@@ -4,6 +4,7 @@ export type UserProfile = {
   id: string;
   fullName: string;
   name?: string;
+  username?: string;
   email: string;
   role: Role;
   studioName?: string;

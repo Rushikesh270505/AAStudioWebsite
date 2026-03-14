@@ -1,17 +1,13 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { buildAvatarUrl, generateAvatarSeed } from "@/lib/avatar";
+import { generateAvatarSeed } from "@/lib/avatar";
 import { getWorkspacePath, saveSession } from "@/lib/auth";
-import { loginUser, registerUser, requestPasswordReset, requestSignupOtp, staffLoginUser, verifySignupOtp } from "@/lib/api";
+import { loginUser, loginWithOtp, registerUser, requestLoginOtp, requestSignupOtp, verifySignupOtp } from "@/lib/api";
+import { studioProjects } from "@/lib/site-data";
 
-type AuthPanelProps = {
-  staffMode?: boolean;
-};
-
-type Mode = "login" | "signup" | "forgot";
+type Mode = "login" | "signup";
 
 type OtpState = {
   recipient: string;
@@ -33,46 +29,51 @@ function createOtpState(recipient = ""): OtpState {
   };
 }
 
-function getDefaultMessage(staffMode: boolean, mode: Mode) {
-  if (staffMode) {
-    return "Use your architect/admin credentials to enter the internal workspace.";
-  }
-
-  if (mode === "signup") {
-    return "Create a client account to track projects, files, revisions, meetings, and payment milestones.";
-  }
-
-  if (mode === "forgot") {
-    return "Enter your account email to register a password-reset request.";
-  }
-
-  return "Use your client credentials to open the project workspace, review updates, and track invoices.";
+function buildDefaultMessage(mode: Mode) {
+  return mode === "signup"
+    ? "Verify your email, set a password, and your client workspace will be ready."
+    : "Sign in with your email or username.";
 }
 
-export function AuthPanel({ staffMode = false }: AuthPanelProps) {
+export function AuthPanel() {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>(staffMode ? "login" : "signup");
-  const [fullName, setFullName] = useState("");
+  const [mode, setMode] = useState<Mode>("login");
+  const [identifier, setIdentifier] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [studioName, setStudioName] = useState("");
-  const [message, setMessage] = useState(() => getDefaultMessage(staffMode, staffMode ? "login" : "signup"));
+  const [message, setMessage] = useState(() => buildDefaultMessage("login"));
   const [isPending, setIsPending] = useState(false);
   const [otpPending, setOtpPending] = useState(false);
   const [emailOtp, setEmailOtp] = useState("");
   const [emailVerification, setEmailVerification] = useState<OtpState>(createOtpState());
-  const [avatarSeed, setAvatarSeed] = useState(() => generateAvatarSeed("guest"));
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotOtp, setForgotOtp] = useState("");
+  const [forgotVerification, setForgotVerification] = useState<OtpState>(createOtpState());
 
+  const normalizedUsername = username.trim().toLowerCase();
   const normalizedEmail = email.trim().toLowerCase();
   const normalizedPhone = phone.trim();
+  const normalizedForgotEmail = forgotEmail.trim().toLowerCase();
   const signupReady = emailVerification.verified;
+  const showcaseProject = studioProjects[1];
+  const signupAvatarSeed = generateAvatarSeed(normalizedUsername || normalizedEmail || "guest");
 
   useEffect(() => {
-    if (fullName.trim()) {
-      setAvatarSeed(generateAvatarSeed(fullName));
+    setMessage(buildDefaultMessage(mode));
+    if (mode === "signup") {
+      setForgotOpen(false);
+      setForgotOtp("");
+      setForgotVerification(createOtpState());
+      return;
     }
-  }, [fullName]);
+
+    setEmailOtp("");
+    setEmailVerification(createOtpState());
+  }, [mode]);
 
   useEffect(() => {
     if (mode !== "signup") {
@@ -85,16 +86,30 @@ export function AuthPanel({ staffMode = false }: AuthPanelProps) {
     }
   }, [emailVerification.recipient, mode, normalizedEmail]);
 
-  const avatarUrl = useMemo(() => buildAvatarUrl(avatarSeed), [avatarSeed]);
+  useEffect(() => {
+    if (!forgotOpen) {
+      return;
+    }
 
-  function handleModeChange(nextMode: Mode) {
-    setMode(nextMode);
-    setMessage(getDefaultMessage(staffMode, nextMode));
-  }
+    if (identifier.includes("@") && !forgotEmail.trim()) {
+      setForgotEmail(identifier.trim().toLowerCase());
+    }
+  }, [forgotOpen, forgotEmail, identifier]);
 
-  async function handleRequestEmailOtp() {
+  useEffect(() => {
+    if (!forgotOpen) {
+      return;
+    }
+
+    if (normalizedForgotEmail !== forgotVerification.recipient) {
+      setForgotVerification(createOtpState(normalizedForgotEmail));
+      setForgotOtp("");
+    }
+  }, [forgotOpen, forgotVerification.recipient, normalizedForgotEmail]);
+
+  async function handleRequestSignupOtp() {
     if (!normalizedEmail) {
-      setMessage("Enter your email address before requesting an OTP.");
+      setMessage("Enter your email before requesting the OTP.");
       return;
     }
 
@@ -111,13 +126,9 @@ export function AuthPanel({ staffMode = false }: AuthPanelProps) {
         message: response.message,
       });
       setEmailOtp("");
-      setMessage(
-        response.debugCode
-          ? `${response.message} Debug fallback is active, so the OTP is visible in the card below.`
-          : response.message,
-      );
+      setMessage(response.message);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unable to send OTP.";
+      const errorMessage = error instanceof Error ? error.message : "Unable to send the email OTP.";
       setEmailVerification((current) => ({
         ...current,
         requested: false,
@@ -130,13 +141,8 @@ export function AuthPanel({ staffMode = false }: AuthPanelProps) {
     }
   }
 
-  async function handleVerifyEmailOtp() {
-    if (!normalizedEmail) {
-      setMessage("Enter your email address before verifying the OTP.");
-      return;
-    }
-
-    if (!emailOtp.trim()) {
+  async function handleVerifySignupOtp() {
+    if (!normalizedEmail || !emailOtp.trim()) {
       setMessage("Enter the email OTP before verifying.");
       return;
     }
@@ -154,13 +160,66 @@ export function AuthPanel({ staffMode = false }: AuthPanelProps) {
       }));
       setMessage(response.message);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unable to verify OTP.";
+      const errorMessage = error instanceof Error ? error.message : "Unable to verify the email OTP.";
       setEmailVerification((current) => ({
         ...current,
         verified: false,
         message: errorMessage,
       }));
       setMessage(errorMessage);
+    } finally {
+      setOtpPending(false);
+    }
+  }
+
+  async function handleRequestLoginOtp() {
+    if (!normalizedForgotEmail) {
+      setMessage("Enter the email address linked to your account.");
+      return;
+    }
+
+    setOtpPending(true);
+
+    try {
+      const response = await requestLoginOtp(normalizedForgotEmail);
+      setForgotVerification({
+        recipient: normalizedForgotEmail,
+        requested: true,
+        verified: false,
+        debugCode: response.debugCode,
+        expiresInMinutes: response.expiresInMinutes,
+        message: response.message,
+      });
+      setForgotOtp("");
+      setMessage(response.message);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unable to send the login OTP.";
+      setForgotVerification((current) => ({
+        ...current,
+        requested: false,
+        verified: false,
+        message: errorMessage,
+      }));
+      setMessage(errorMessage);
+    } finally {
+      setOtpPending(false);
+    }
+  }
+
+  async function handleLoginWithOtp() {
+    if (!normalizedForgotEmail || !forgotOtp.trim()) {
+      setMessage("Enter the email OTP to continue.");
+      return;
+    }
+
+    setOtpPending(true);
+
+    try {
+      const response = await loginWithOtp(normalizedForgotEmail, forgotOtp.trim());
+      saveSession(response.token, response.user);
+      router.push(getWorkspacePath(response.user.role));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to sign in with OTP.");
     } finally {
       setOtpPending(false);
     }
@@ -175,29 +234,20 @@ export function AuthPanel({ staffMode = false }: AuthPanelProps) {
     }
 
     setIsPending(true);
-    setMessage("Working...");
+    setMessage(mode === "signup" ? "Creating your account..." : "Signing you in...");
 
     try {
-      if (mode === "forgot") {
-        const response = await requestPasswordReset(email);
-        setMessage(response.message);
-        setIsPending(false);
-        return;
-      }
-
       const response =
         mode === "signup"
           ? await registerUser({
-              fullName,
+              username: normalizedUsername,
               email: normalizedEmail,
               password,
               phone: normalizedPhone,
-              studioName,
-              avatarSeed,
+              studioName: studioName.trim(),
+              avatarSeed: signupAvatarSeed,
             })
-          : staffMode
-            ? await staffLoginUser(email, password)
-            : await loginUser(email, password);
+          : await loginUser(identifier.trim(), password);
 
       saveSession(response.token, response.user);
       router.push(getWorkspacePath(response.user.role));
@@ -208,174 +258,132 @@ export function AuthPanel({ staffMode = false }: AuthPanelProps) {
     }
   }
 
-  function renderEmailOtpCard() {
-    return (
-      <div className="rounded-[28px] border border-black/8 bg-white/75 p-4 shadow-[0_18px_40px_rgba(17,17,17,0.04)]">
-        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-          <label className="grid gap-2 text-sm text-[#3c3c3c]">
-            Email
-            <input
-              required
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
-            />
-          </label>
-          <button
-            type="button"
-            onClick={handleRequestEmailOtp}
-            disabled={otpPending || !normalizedEmail}
-            className="premium-button px-5 py-3 text-sm font-medium disabled:opacity-60"
-          >
-            {otpPending ? "Sending..." : emailVerification.requested ? "Resend email OTP" : "Send email OTP"}
-          </button>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-          <label className="grid gap-2 text-sm text-[#3c3c3c]">
-            Email OTP
-            <input
-              value={emailOtp}
-              onChange={(event) => setEmailOtp(event.target.value)}
-              maxLength={6}
-              inputMode="numeric"
-              placeholder="Enter 6-digit code"
-              className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
-            />
-          </label>
-          <button
-            type="button"
-            onClick={handleVerifyEmailOtp}
-            disabled={otpPending || !emailVerification.requested || emailVerification.verified}
-            className="premium-button px-5 py-3 text-sm font-medium disabled:opacity-60"
-          >
-            {otpPending ? "Checking..." : emailVerification.verified ? "Email verified" : "Verify email"}
-          </button>
-        </div>
-
-        <div className="mt-3 grid gap-2 text-xs leading-6 text-[#6b6b6b]">
-          <p>
-            {emailVerification.message ||
-              (emailVerification.verified
-                ? "Email verification completed."
-                : emailVerification.requested
-                  ? "Email OTP sent. Enter the six-digit code to continue."
-                  : "We send a six-digit verification code to confirm this address before account creation.")}
-          </p>
-          {emailVerification.expiresInMinutes ? <p>OTP expires in {emailVerification.expiresInMinutes} minutes.</p> : null}
-          {emailVerification.debugCode ? (
-            <p className="rounded-2xl border border-[#c8a97e]/30 bg-[#f9f3ea] px-3 py-2 text-[#8f6532]">
-              Debug OTP: <span className="font-semibold tracking-[0.2em]">{emailVerification.debugCode}</span>
-            </p>
-          ) : null}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="grid gap-6 lg:grid-cols-[0.54fr_0.46fr]">
-      <form onSubmit={handleSubmit} className="glass-panel rounded-[36px] p-6 md:p-8">
-        <p className="eyebrow">{staffMode ? "Staff Access" : "Secure Access"}</p>
-        <h1 className="display-title mt-4 text-4xl leading-[0.95] md:text-6xl">
-          {staffMode ? "Architect and admin workspace access" : "Client and studio authentication"}
-        </h1>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-[#5d5d5d]">
-          {staffMode
-            ? "Internal staff accounts are separated from the public auth flow. Use your studio credentials to open the architect workspace or admin control panel."
-            : "Public sign up is reserved for clients and onboarding users. Internal staff roles stay behind a separate login path, and new client accounts require email OTP verification before creation."}
-        </p>
+    <div className="grid gap-6 xl:grid-cols-[0.56fr_0.44fr]">
+      <form
+        onSubmit={handleSubmit}
+        className="glass-panel relative overflow-hidden rounded-[38px] border border-white/50 p-6 shadow-[0_32px_80px_rgba(17,17,17,0.08)] md:p-8"
+      >
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,rgba(200,169,126,0.18),transparent_62%)]" />
 
-        {!staffMode ? (
-          <div className="mt-6 inline-flex rounded-full border border-black/8 bg-white/70 p-1">
-            {(["signup", "login", "forgot"] as Mode[]).map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => handleModeChange(item)}
-                className={`rounded-full px-4 py-2 text-sm transition-all ${
-                  mode === item
-                    ? "bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(200,169,126,0.22))] text-[#111111] shadow-[0_10px_24px_rgba(200,169,126,0.12)]"
-                    : "text-[#5d5d5d]"
-                }`}
-              >
-                {item === "signup" ? "Sign Up" : item === "login" ? "Login" : "Forgot Password"}
-              </button>
-            ))}
+        <div className="relative flex flex-col gap-6">
+          <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+            <div className="max-w-xl">
+              <p className="eyebrow">Secure Access</p>
+              <h1 className="display-title mt-4 text-4xl leading-[0.94] md:text-6xl">
+                {mode === "signup" ? "Create your client account" : "Sign in to the workspace"}
+              </h1>
+              <p className="mt-4 max-w-lg text-sm leading-7 text-[#5d5d5d]">{message}</p>
+            </div>
+
+            <div className="inline-flex rounded-full border border-black/8 bg-white/72 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.82)]">
+              {(["login", "signup"] as Mode[]).map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setMode(item)}
+                  className={`rounded-full px-4 py-2 text-sm transition-all ${
+                    mode === item
+                      ? "bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(200,169,126,0.22))] text-[#111111] shadow-[0_10px_24px_rgba(200,169,126,0.12)]"
+                      : "text-[#6a6a6a]"
+                  }`}
+                >
+                  {item === "login" ? "Login" : "Sign Up"}
+                </button>
+              ))}
+            </div>
           </div>
-        ) : null}
 
-        <div className="mt-6 grid gap-4">
-          {mode === "signup" ? (
-            <>
-              <div className="flex items-center gap-4 rounded-[28px] border border-black/8 bg-white/70 p-4">
-                <img src={avatarUrl} alt="Generated avatar preview" className="h-16 w-16 rounded-full border border-black/8" />
-                <div>
-                  <p className="text-xs uppercase tracking-[0.24em] text-[#8f6532]">Avatar Preview</p>
-                  <p className="mt-2 text-sm text-[#5d5d5d]">
-                    A random profile avatar is generated automatically at signup and can be changed later in profile settings.
-                  </p>
-                </div>
-              </div>
-
-              <label className="grid gap-2 text-sm text-[#3c3c3c]">
-                Full name
-                <input
-                  required
-                  value={fullName}
-                  onChange={(event) => setFullName(event.target.value)}
-                  className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
-                />
-              </label>
-
-              {renderEmailOtpCard()}
-
-              <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4">
+            {mode === "signup" ? (
+              <>
                 <label className="grid gap-2 text-sm text-[#3c3c3c]">
-                  Phone / WhatsApp
+                  Username
                   <input
                     required
-                    value={phone}
-                    onChange={(event) => setPhone(event.target.value)}
-                    className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
+                    value={username}
+                    onChange={(event) => setUsername(event.target.value)}
+                    className="rounded-[24px] border border-black/10 bg-white/88 px-4 py-3.5 outline-none transition-colors focus:border-[#c8a97e]"
                   />
                 </label>
-                <label className="grid gap-2 text-sm text-[#3c3c3c]">
-                  Studio / Company
-                  <input
-                    value={studioName}
-                    onChange={(event) => setStudioName(event.target.value)}
-                    className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
-                  />
-                </label>
-              </div>
 
-              <label className="grid gap-2 text-sm text-[#3c3c3c]">
-                Password
-                <input
-                  required
-                  type="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
-                />
-              </label>
-            </>
-          ) : (
-            <>
-              <label className="grid gap-2 text-sm text-[#3c3c3c]">
-                Email
-                <input
-                  required
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
-                />
-              </label>
+                <div className="rounded-[28px] border border-black/8 bg-white/70 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]">
+                  <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                    <label className="grid gap-2 text-sm text-[#3c3c3c]">
+                      Email
+                      <input
+                        required
+                        type="email"
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        className="rounded-[22px] border border-black/10 bg-white px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleRequestSignupOtp}
+                      disabled={otpPending || !normalizedEmail}
+                      className="premium-button px-5 py-3 text-sm font-medium disabled:opacity-60"
+                    >
+                      {otpPending ? "Sending..." : emailVerification.requested ? "Resend OTP" : "Send OTP"}
+                    </button>
+                  </div>
 
-              {mode !== "forgot" ? (
+                  <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                    <label className="grid gap-2 text-sm text-[#3c3c3c]">
+                      Email OTP
+                      <input
+                        value={emailOtp}
+                        onChange={(event) => setEmailOtp(event.target.value)}
+                        maxLength={6}
+                        inputMode="numeric"
+                        placeholder="Enter 6-digit code"
+                        className="rounded-[22px] border border-black/10 bg-white px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleVerifySignupOtp}
+                      disabled={otpPending || !emailVerification.requested || emailVerification.verified}
+                      className="premium-button-soft px-5 py-3 text-sm font-medium disabled:opacity-60"
+                    >
+                      {otpPending ? "Checking..." : emailVerification.verified ? "Verified" : "Verify"}
+                    </button>
+                  </div>
+
+                  {emailVerification.message || emailVerification.debugCode ? (
+                    <div className="mt-3 grid gap-2 text-xs leading-6 text-[#6b6b6b]">
+                      {emailVerification.message ? <p>{emailVerification.message}</p> : null}
+                      {emailVerification.expiresInMinutes ? <p>OTP expires in {emailVerification.expiresInMinutes} minutes.</p> : null}
+                      {emailVerification.debugCode ? (
+                        <p className="rounded-2xl border border-[#c8a97e]/24 bg-[#fbf6ee] px-3 py-2 text-[#8f6532]">
+                          Debug OTP: <span className="font-semibold tracking-[0.18em]">{emailVerification.debugCode}</span>
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="grid gap-2 text-sm text-[#3c3c3c]">
+                    Phone Number
+                    <input
+                      required
+                      value={phone}
+                      onChange={(event) => setPhone(event.target.value)}
+                      className="rounded-[24px] border border-black/10 bg-white/88 px-4 py-3.5 outline-none transition-colors focus:border-[#c8a97e]"
+                    />
+                  </label>
+                  <label className="grid gap-2 text-sm text-[#3c3c3c]">
+                    Studio / Company
+                    <input
+                      value={studioName}
+                      onChange={(event) => setStudioName(event.target.value)}
+                      className="rounded-[24px] border border-black/10 bg-white/88 px-4 py-3.5 outline-none transition-colors focus:border-[#c8a97e]"
+                    />
+                  </label>
+                </div>
+
                 <label className="grid gap-2 text-sm text-[#3c3c3c]">
                   Password
                   <input
@@ -383,63 +391,193 @@ export function AuthPanel({ staffMode = false }: AuthPanelProps) {
                     type="password"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
-                    className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
+                    className="rounded-[24px] border border-black/10 bg-white/88 px-4 py-3.5 outline-none transition-colors focus:border-[#c8a97e]"
                   />
                 </label>
-              ) : null}
-            </>
-          )}
-        </div>
+              </>
+            ) : (
+              <>
+                <label className="grid gap-2 text-sm text-[#3c3c3c]">
+                  Email or Username
+                  <input
+                    required
+                    value={identifier}
+                    onChange={(event) => setIdentifier(event.target.value)}
+                    className="rounded-[24px] border border-black/10 bg-white/88 px-4 py-3.5 outline-none transition-colors focus:border-[#c8a97e]"
+                  />
+                </label>
 
-        <div className="mt-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <p className="max-w-2xl text-sm leading-7 text-[#5d5d5d]">{message}</p>
-          <button
-            type="submit"
-            disabled={isPending || (mode === "signup" && !signupReady)}
-            className="premium-button min-w-[180px] px-6 py-3 text-sm font-medium disabled:opacity-60"
-          >
-            {isPending
-              ? "Please wait..."
-              : mode === "signup"
-                ? "Create account"
-                : mode === "forgot"
-                  ? "Request reset"
-                  : "Sign in"}
-          </button>
+                <div className="grid gap-2">
+                  <label className="grid gap-2 text-sm text-[#3c3c3c]">
+                    Password
+                    <input
+                      required
+                      type="password"
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      className="rounded-[24px] border border-black/10 bg-white/88 px-4 py-3.5 outline-none transition-colors focus:border-[#c8a97e]"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setForgotOpen((current) => !current)}
+                    className="justify-self-start text-sm font-medium text-[#3867b4] transition-colors hover:text-[#111111]"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+
+                {forgotOpen ? (
+                  <div className="rounded-[28px] border border-[#c8a97e]/18 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(249,243,235,0.92))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]">
+                    <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                      <label className="grid gap-2 text-sm text-[#3c3c3c]">
+                        Email ID
+                        <input
+                          type="email"
+                          value={forgotEmail}
+                          onChange={(event) => setForgotEmail(event.target.value)}
+                          className="rounded-[22px] border border-black/10 bg-white px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleRequestLoginOtp}
+                        disabled={otpPending || !normalizedForgotEmail}
+                        className="premium-button px-5 py-3 text-sm font-medium disabled:opacity-60"
+                      >
+                        {otpPending ? "Sending..." : forgotVerification.requested ? "Resend OTP" : "Send OTP"}
+                      </button>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                      <label className="grid gap-2 text-sm text-[#3c3c3c]">
+                        OTP
+                        <input
+                          value={forgotOtp}
+                          onChange={(event) => setForgotOtp(event.target.value)}
+                          maxLength={6}
+                          inputMode="numeric"
+                          placeholder="Enter 6-digit code"
+                          className="rounded-[22px] border border-black/10 bg-white px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleLoginWithOtp}
+                        disabled={otpPending || !forgotVerification.requested || !forgotOtp.trim()}
+                        className="premium-button-soft px-5 py-3 text-sm font-medium disabled:opacity-60"
+                      >
+                        {otpPending ? "Checking..." : "Login with OTP"}
+                      </button>
+                    </div>
+
+                    {forgotVerification.message || forgotVerification.debugCode ? (
+                      <div className="mt-3 grid gap-2 text-xs leading-6 text-[#6b6b6b]">
+                        {forgotVerification.message ? <p>{forgotVerification.message}</p> : null}
+                        {forgotVerification.expiresInMinutes ? <p>OTP expires in {forgotVerification.expiresInMinutes} minutes.</p> : null}
+                        {forgotVerification.debugCode ? (
+                          <p className="rounded-2xl border border-[#c8a97e]/24 bg-[#fbf6ee] px-3 py-2 text-[#8f6532]">
+                            Debug OTP: <span className="font-semibold tracking-[0.18em]">{forgotVerification.debugCode}</span>
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-3 pt-2 md:flex-row md:items-center md:justify-between">
+            <p className="text-sm leading-7 text-[#5d5d5d]">
+              {mode === "signup"
+                ? "Your dashboard will open right after account creation."
+                : "Use password sign-in, or switch to email OTP below the password field."}
+            </p>
+            <button
+              type="submit"
+              disabled={isPending || (mode === "signup" && !signupReady)}
+              className="premium-button min-w-[180px] px-6 py-3 text-sm font-medium disabled:opacity-60"
+            >
+              {isPending ? "Please wait..." : mode === "signup" ? "Create account" : "Sign in"}
+            </button>
+          </div>
         </div>
       </form>
 
-      <div className="grid gap-4">
-        <div className="glass-panel rounded-[36px] p-6">
-          <p className="text-xs uppercase tracking-[0.24em] text-[#8f6532]">Why this flow</p>
-          <div className="mt-4 grid gap-3 text-sm leading-7 text-[#5d5d5d]">
-            <p>Clients can onboard directly, track assigned projects, and review invoices without seeing staff-only operations.</p>
-            <p>Architect and admin accounts remain internal and route into secure role-based workspaces.</p>
-            <p>Email OTP gates public signup, while the phone number is still captured for coordination, project updates, and future verification upgrades.</p>
+      <div className="hidden gap-4 xl:grid">
+        <div
+          className="glass-panel relative min-h-[420px] overflow-hidden rounded-[38px] border border-white/50"
+          style={{
+            backgroundImage: `linear-gradient(180deg, rgba(17,17,17,0.1), rgba(17,17,17,0.62)), url(${showcaseProject.heroImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(200,169,126,0.24),transparent_58%)]" />
+          <div className="relative flex h-full flex-col justify-between p-6 text-white">
+            <div className="grid gap-3">
+              <div className="w-fit rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.24em] backdrop-blur-md">
+                Dashboard Preview
+              </div>
+              <h2 className="display-title max-w-md text-5xl leading-[0.95]">
+                Clean client access with a sharper presentation.
+              </h2>
+            </div>
+
+            <div className="grid gap-3">
+              <div className="grid gap-3 md:grid-cols-3">
+                {[
+                  { label: "Projects", value: "03" },
+                  { label: "Files", value: "24" },
+                  { label: "Meetings", value: "06" },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-[24px] border border-white/16 bg-white/10 px-4 py-4 backdrop-blur-md"
+                  >
+                    <p className="text-xs uppercase tracking-[0.22em] text-white/72">{item.label}</p>
+                    <p className="mt-3 text-3xl font-medium">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
-        {!staffMode ? (
-          <div className="glass-panel rounded-[36px] p-6">
-            <p className="text-xs uppercase tracking-[0.24em] text-[#8f6532]">Internal staff</p>
-            <p className="mt-4 text-sm leading-7 text-[#5d5d5d]">
-              Studio architects and admins should not use the public signup page.
-            </p>
-            <Link href="/staff-login" className="premium-button mt-5 px-5 py-3 text-sm font-medium">
-              Open staff login
-            </Link>
+        <div className="grid gap-4 md:grid-cols-[0.46fr_0.54fr]">
+          <div className="glass-panel rounded-[32px] p-5">
+            <p className="eyebrow">Latest project</p>
+            <p className="display-title mt-4 text-3xl">{showcaseProject.title}</p>
+            <p className="mt-3 text-sm leading-7 text-[#5d5d5d]">{showcaseProject.summary}</p>
+            <div className="mt-5 space-y-3">
+              {showcaseProject.timeline.slice(0, 2).map((entry) => (
+                <div key={entry.title} className="rounded-[22px] border border-black/8 bg-white/65 p-4">
+                  <p className="font-medium text-[#111111]">{entry.title}</p>
+                  <p className="mt-2 text-xs uppercase tracking-[0.22em] text-[#8f6532]">{entry.status}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        ) : (
-          <div className="glass-panel rounded-[36px] p-6">
-            <p className="text-xs uppercase tracking-[0.24em] text-[#8f6532]">Client onboarding</p>
-            <p className="mt-4 text-sm leading-7 text-[#5d5d5d]">
-              Public users and clients should return to the public auth page to sign up, log in, or request password reset.
-            </p>
-            <Link href="/auth" className="premium-button mt-5 px-5 py-3 text-sm font-medium">
-              Open public auth
-            </Link>
+
+          <div className="glass-panel rounded-[32px] p-5">
+            <p className="eyebrow">Inside the portal</p>
+            <div className="mt-5 grid gap-3">
+              {[
+                "Project files organized by deliverable",
+                "Meetings and invoice checkpoints in one view",
+                "Separate admin and staff workspaces after sign-in",
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="rounded-[22px] border border-black/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(249,243,235,0.82))] px-4 py-4 text-sm text-[#333333]"
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

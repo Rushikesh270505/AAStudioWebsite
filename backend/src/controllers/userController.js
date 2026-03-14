@@ -7,7 +7,7 @@ const { createNotifications, logAudit } = require("../utils/activity");
 
 async function listArchitects(req, res) {
   const architects = await User.find({ role: "architect", isActive: true })
-    .select("fullName name email role avatarUrl avatarSeed companyArchitectId specializationTags studioName")
+    .select("fullName name username email role avatarUrl avatarSeed companyArchitectId specializationTags studioName")
     .sort({ fullName: 1 });
 
   const projects = await Project.find({ mainArchitect: { $in: architects.map((architect) => architect._id) } }).select(
@@ -54,14 +54,16 @@ async function updateProfile(req, res) {
 }
 
 async function createArchitect(req, res) {
-  const { fullName, email, phone, specializationTags = [], companyArchitectId } = req.body;
+  const { username, fullName, email, phone, specializationTags = [], companyArchitectId } = req.body;
   const password = req.body.password || crypto.randomBytes(8).toString("base64url");
-  const avatarSeed = `${fullName}-${crypto.randomBytes(4).toString("hex")}`;
+  const displayName = fullName || username;
+  const avatarSeed = `${displayName}-${crypto.randomBytes(4).toString("hex")}`;
 
   const user = await User.create({
-    fullName,
-    name: fullName,
-    email,
+    fullName: displayName,
+    name: displayName,
+    username,
+    email: email?.trim().toLowerCase(),
     password,
     phone,
     role: "architect",
@@ -78,8 +80,10 @@ async function createArchitect(req, res) {
     targetUser: user._id,
   });
 
+  const safeUser = await User.findById(user._id).select("-password");
+
   return res.status(201).json({
-    user,
+    user: safeUser,
     temporaryPassword: password,
   });
 }

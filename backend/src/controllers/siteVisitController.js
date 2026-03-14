@@ -13,7 +13,7 @@ async function listSiteVisits(req, res) {
   }
 
   const visits = await SiteVisit.find(query)
-    .populate("assignedStaff", "fullName name email role avatarUrl avatarSeed")
+    .populate("assignedStaff", "fullName name username email role avatarUrl avatarSeed")
     .sort({ date: 1 });
 
   return res.json(visits);
@@ -41,7 +41,7 @@ async function createSiteVisit(req, res) {
   );
 
   return res.status(201).json(
-    await SiteVisit.findById(visit._id).populate("assignedStaff", "fullName name email role avatarUrl avatarSeed"),
+    await SiteVisit.findById(visit._id).populate("assignedStaff", "fullName name username email role avatarUrl avatarSeed"),
   );
 }
 

@@ -47,7 +47,7 @@ function authHeaders(token: string) {
 }
 
 export function registerUser(payload: {
-  fullName: string;
+  username: string;
   email: string;
   password: string;
   phone?: string;
@@ -60,17 +60,31 @@ export function registerUser(payload: {
   });
 }
 
-export function loginUser(email: string, password: string) {
+export function loginUser(identifier: string, password: string) {
   return request<AuthResponse>("/auth/login", {
     method: "POST",
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ identifier, password }),
   });
 }
 
-export function staffLoginUser(email: string, password: string) {
+export function staffLoginUser(identifier: string, password: string) {
   return request<AuthResponse>("/auth/staff-login", {
     method: "POST",
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ identifier, password }),
+  });
+}
+
+export function requestLoginOtp(email: string) {
+  return request<OtpRequestResponse>("/auth/request-otp", {
+    method: "POST",
+    body: JSON.stringify({ channel: "email", recipient: email, purpose: "login" }),
+  });
+}
+
+export function loginWithOtp(email: string, code: string) {
+  return request<AuthResponse>("/auth/login-with-otp", {
+    method: "POST",
+    body: JSON.stringify({ email, code }),
   });
 }
 
@@ -250,7 +264,7 @@ export function fetchUsers(token: string) {
 export function createArchitectAccount(
   token: string,
   payload: {
-    fullName: string;
+    username: string;
     email: string;
     phone?: string;
     specializationTags?: string[];

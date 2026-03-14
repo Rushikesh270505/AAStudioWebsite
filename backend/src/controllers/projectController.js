@@ -16,7 +16,7 @@ const { createNotifications, logAudit } = require("../utils/activity");
 const { getProjectAccessSnapshot } = require("../utils/projectAccess");
 
 const userSelect =
-  "fullName name email role avatarUrl avatarSeed companyArchitectId specializationTags studioName";
+  "fullName name username email role avatarUrl avatarSeed companyArchitectId specializationTags studioName";
 
 function slugify(value) {
   return value

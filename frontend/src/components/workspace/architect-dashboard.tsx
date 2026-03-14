@@ -58,7 +58,7 @@ function ArchitectDashboardContent({ token, user }: { token: string; user: UserP
     <WorkspaceShell
       user={user}
       title="Architect dashboard"
-      description="Claim new work, monitor active commissions, prepare review-ready submissions, and keep collaboration visible across delivery milestones."
+      description="Claim new work, monitor active commissions, prepare review-ready submissions, and keep delivery organized with a cleaner studio-facing board."
       navItems={[{ href: "/architect/dashboard", label: "Dashboard" }]}
       notifications={payload?.notifications || []}
       actions={
@@ -178,6 +178,40 @@ function ArchitectDashboardContent({ token, user }: { token: string; user: UserP
               <UpdateFeed updates={payload.updates} emptyLabel="No architect updates are available yet." />
             </div>
           </div>
+
+          <div className="grid gap-6 xl:grid-cols-[0.5fr_0.5fr]">
+            <div className="glass-panel rounded-[28px] border border-white/50 p-6 shadow-[0_20px_50px_rgba(17,17,17,0.05)]">
+              <p className="eyebrow">Ready for review</p>
+              <div className="mt-5 grid gap-3">
+                {payload.readyForReview.length ? (
+                  payload.readyForReview.map((project) => (
+                    <div key={project._id} className="rounded-[22px] border border-black/8 bg-white/65 p-4">
+                      <p className="font-medium text-[#111111]">{project.title}</p>
+                      <p className="mt-2 text-sm text-[#5d5d5d]">{project.location}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-[#5d5d5d]">Nothing is waiting for review approval right now.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="glass-panel rounded-[28px] border border-white/50 p-6 shadow-[0_20px_50px_rgba(17,17,17,0.05)]">
+              <p className="eyebrow">Completed work</p>
+              <div className="mt-5 grid gap-3">
+                {payload.completed.length ? (
+                  payload.completed.slice(0, 5).map((project) => (
+                    <div key={project._id} className="rounded-[22px] border border-black/8 bg-white/65 p-4">
+                      <p className="font-medium text-[#111111]">{project.title}</p>
+                      <p className="mt-2 text-sm text-[#5d5d5d]">{project.location}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-[#5d5d5d]">Completed projects will appear here once they close out.</p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </WorkspaceShell>
@@ -186,7 +220,7 @@ function ArchitectDashboardContent({ token, user }: { token: string; user: UserP
 
 export function ArchitectDashboard() {
   return (
-    <ProtectedArea roles={["architect"]} staffOnly>
+    <ProtectedArea roles={["architect"]}>
       {({ token, user }) => <ArchitectDashboardContent token={token} user={user} />}
     </ProtectedArea>
   );

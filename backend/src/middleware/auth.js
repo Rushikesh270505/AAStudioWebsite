@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const env = require("../config/env");
+const { isAllowedAdminUsername } = require("../utils/adminAccounts");
 
 async function protect(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -20,6 +21,10 @@ async function protect(req, res, next) {
 
     if (!user.isActive) {
       return res.status(403).json({ message: "This account has been deactivated." });
+    }
+
+    if (user.role === "admin" && !isAllowedAdminUsername(user.username)) {
+      return res.status(403).json({ message: "This admin account is not authorized for the control panel." });
     }
 
     req.user = user;
