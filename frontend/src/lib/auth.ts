@@ -11,6 +11,53 @@ export type SessionSnapshot = {
   role: Role | null;
 };
 
+const EMPTY_SESSION_SNAPSHOT: SessionSnapshot = {
+  token: "",
+  user: null,
+  role: null,
+};
+
+let cachedToken = "";
+let cachedUserRaw = "";
+let cachedRole: Role | null = null;
+let cachedSnapshot: SessionSnapshot = EMPTY_SESSION_SNAPSHOT;
+
+function buildSnapshot(token: string, userRaw: string, role: Role | null): SessionSnapshot {
+  if (!token && !userRaw && !role) {
+    cachedToken = "";
+    cachedUserRaw = "";
+    cachedRole = null;
+    cachedSnapshot = EMPTY_SESSION_SNAPSHOT;
+    return EMPTY_SESSION_SNAPSHOT;
+  }
+
+  if (token === cachedToken && userRaw === cachedUserRaw && role === cachedRole) {
+    return cachedSnapshot;
+  }
+
+  let user: UserProfile | null = null;
+
+  if (userRaw) {
+    try {
+      user = JSON.parse(userRaw) as UserProfile;
+    } catch {
+      user = null;
+      userRaw = "";
+    }
+  }
+
+  cachedToken = token;
+  cachedUserRaw = userRaw;
+  cachedRole = role;
+  cachedSnapshot = {
+    token,
+    user,
+    role,
+  };
+
+  return cachedSnapshot;
+}
+
 function emitSessionChange() {
   if (typeof window === "undefined") {
     return;
@@ -81,19 +128,19 @@ export function getStoredRole(): Role | null {
 }
 
 export function getEmptySessionSnapshot(): SessionSnapshot {
-  return {
-    token: "",
-    user: null,
-    role: null,
-  };
+  return EMPTY_SESSION_SNAPSHOT;
 }
 
 export function readSessionSnapshot(): SessionSnapshot {
-  return {
-    token: getStoredToken(),
-    user: getStoredUser(),
-    role: getStoredRole(),
-  };
+  if (typeof window === "undefined") {
+    return EMPTY_SESSION_SNAPSHOT;
+  }
+
+  const token = localStorage.getItem(TOKEN_KEY) || "";
+  const userRaw = localStorage.getItem(USER_KEY) || "";
+  const role = (localStorage.getItem(ROLE_KEY) as Role | null) || null;
+
+  return buildSnapshot(token, userRaw, role);
 }
 
 export function subscribeToSession(callback: () => void) {
