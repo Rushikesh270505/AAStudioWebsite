@@ -66,13 +66,10 @@ async function register(req, res) {
     throw createHttpError(400, "Full name, email, phone number, and password are required.");
   }
 
-  const [emailVerification, phoneVerification] = await Promise.all([
-    getVerifiedOtp("email", normalizedEmail, "signup"),
-    getVerifiedOtp("phone", normalizedPhone, "signup"),
-  ]);
+  const emailVerification = await getVerifiedOtp("email", normalizedEmail, "signup");
 
-  if (!emailVerification || !phoneVerification) {
-    throw createHttpError(400, "Verify both email OTP and phone OTP before creating the account.");
+  if (!emailVerification) {
+    throw createHttpError(400, "Verify your email OTP before creating the account.");
   }
 
   const [existingEmailUser, existingPhoneUser] = await Promise.all([
@@ -107,7 +104,7 @@ async function register(req, res) {
 
   await VerificationCode.deleteMany({
     _id: {
-      $in: [emailVerification._id, phoneVerification._id],
+      $in: [emailVerification._id],
     },
   });
 

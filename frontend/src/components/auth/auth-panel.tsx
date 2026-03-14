@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { buildAvatarUrl, generateAvatarSeed } from "@/lib/avatar";
 import { getWorkspacePath, saveSession } from "@/lib/auth";
 import { loginUser, registerUser, requestPasswordReset, requestSignupOtp, staffLoginUser, verifySignupOtp } from "@/lib/api";
-import type { OtpChannel } from "@/lib/platform-types";
 
 type AuthPanelProps = {
   staffMode?: boolean;
@@ -50,26 +49,6 @@ function getDefaultMessage(staffMode: boolean, mode: Mode) {
   return "Use your client credentials to open the project workspace, review updates, and track invoices.";
 }
 
-function otpCopy(channel: OtpChannel) {
-  return channel === "email"
-    ? {
-        label: "Email",
-        action: "Send email OTP",
-        resend: "Resend email OTP",
-        verify: "Verify email",
-        verified: "Email verified",
-        helper: "We send a six-digit verification code to confirm this address before account creation.",
-      }
-    : {
-        label: "Phone number",
-        action: "Send phone OTP",
-        resend: "Resend phone OTP",
-        verify: "Verify phone",
-        verified: "Phone verified",
-        helper: "We send a six-digit OTP to confirm the contact number that will receive project updates.",
-      };
-}
-
 export function AuthPanel({ staffMode = false }: AuthPanelProps) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>(staffMode ? "login" : "signup");
@@ -80,21 +59,14 @@ export function AuthPanel({ staffMode = false }: AuthPanelProps) {
   const [studioName, setStudioName] = useState("");
   const [message, setMessage] = useState(() => getDefaultMessage(staffMode, staffMode ? "login" : "signup"));
   const [isPending, setIsPending] = useState(false);
-  const [otpPending, setOtpPending] = useState<Record<OtpChannel, boolean>>({
-    email: false,
-    phone: false,
-  });
+  const [otpPending, setOtpPending] = useState(false);
   const [emailOtp, setEmailOtp] = useState("");
-  const [phoneOtp, setPhoneOtp] = useState("");
-  const [otpStates, setOtpStates] = useState<Record<OtpChannel, OtpState>>({
-    email: createOtpState(),
-    phone: createOtpState(),
-  });
+  const [emailVerification, setEmailVerification] = useState<OtpState>(createOtpState());
   const [avatarSeed, setAvatarSeed] = useState(() => generateAvatarSeed("guest"));
 
   const normalizedEmail = email.trim().toLowerCase();
   const normalizedPhone = phone.trim();
-  const signupReady = otpStates.email.verified && otpStates.phone.verified;
+  const signupReady = emailVerification.verified;
 
   useEffect(() => {
     if (fullName.trim()) {
@@ -107,28 +79,11 @@ export function AuthPanel({ staffMode = false }: AuthPanelProps) {
       return;
     }
 
-    if (normalizedEmail !== otpStates.email.recipient) {
-      setOtpStates((current) => ({
-        ...current,
-        email: createOtpState(normalizedEmail),
-      }));
+    if (normalizedEmail !== emailVerification.recipient) {
+      setEmailVerification(createOtpState(normalizedEmail));
       setEmailOtp("");
     }
-  }, [mode, normalizedEmail, otpStates.email.recipient]);
-
-  useEffect(() => {
-    if (mode !== "signup") {
-      return;
-    }
-
-    if (normalizedPhone !== otpStates.phone.recipient) {
-      setOtpStates((current) => ({
-        ...current,
-        phone: createOtpState(normalizedPhone),
-      }));
-      setPhoneOtp("");
-    }
-  }, [mode, normalizedPhone, otpStates.phone.recipient]);
+  }, [emailVerification.recipient, mode, normalizedEmail]);
 
   const avatarUrl = useMemo(() => buildAvatarUrl(avatarSeed), [avatarSeed]);
 
@@ -137,37 +92,25 @@ export function AuthPanel({ staffMode = false }: AuthPanelProps) {
     setMessage(getDefaultMessage(staffMode, nextMode));
   }
 
-  async function handleRequestOtp(channel: OtpChannel) {
-    const recipient = channel === "email" ? normalizedEmail : normalizedPhone;
-
-    if (!recipient) {
-      setMessage(`Enter your ${channel === "email" ? "email address" : "phone number"} before requesting an OTP.`);
+  async function handleRequestEmailOtp() {
+    if (!normalizedEmail) {
+      setMessage("Enter your email address before requesting an OTP.");
       return;
     }
 
-    setOtpPending((current) => ({ ...current, [channel]: true }));
+    setOtpPending(true);
 
     try {
-      const response = await requestSignupOtp(channel, recipient);
-
-      setOtpStates((current) => ({
-        ...current,
-        [channel]: {
-          recipient,
-          requested: true,
-          verified: false,
-          debugCode: response.debugCode,
-          expiresInMinutes: response.expiresInMinutes,
-          message: response.message,
-        },
-      }));
-
-      if (channel === "email") {
-        setEmailOtp("");
-      } else {
-        setPhoneOtp("");
-      }
-
+      const response = await requestSignupOtp("email", normalizedEmail);
+      setEmailVerification({
+        recipient: normalizedEmail,
+        requested: true,
+        verified: false,
+        debugCode: response.debugCode,
+        expiresInMinutes: response.expiresInMinutes,
+        message: response.message,
+      });
+      setEmailOtp("");
       setMessage(
         response.debugCode
           ? `${response.message} Debug fallback is active, so the OTP is visible in the card below.`
@@ -175,65 +118,51 @@ export function AuthPanel({ staffMode = false }: AuthPanelProps) {
       );
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unable to send OTP.";
-      setOtpStates((current) => ({
+      setEmailVerification((current) => ({
         ...current,
-        [channel]: {
-          ...current[channel],
-          requested: false,
-          verified: false,
-          message: errorMessage,
-        },
+        requested: false,
+        verified: false,
+        message: errorMessage,
       }));
       setMessage(errorMessage);
     } finally {
-      setOtpPending((current) => ({ ...current, [channel]: false }));
+      setOtpPending(false);
     }
   }
 
-  async function handleVerifyOtp(channel: OtpChannel) {
-    const recipient = channel === "email" ? normalizedEmail : normalizedPhone;
-    const code = channel === "email" ? emailOtp.trim() : phoneOtp.trim();
-
-    if (!recipient) {
-      setMessage(`Enter your ${channel === "email" ? "email address" : "phone number"} before verifying the OTP.`);
+  async function handleVerifyEmailOtp() {
+    if (!normalizedEmail) {
+      setMessage("Enter your email address before verifying the OTP.");
       return;
     }
 
-    if (!code) {
-      setMessage(`Enter the ${channel === "email" ? "email" : "phone"} OTP before verifying.`);
+    if (!emailOtp.trim()) {
+      setMessage("Enter the email OTP before verifying.");
       return;
     }
 
-    setOtpPending((current) => ({ ...current, [channel]: true }));
+    setOtpPending(true);
 
     try {
-      const response = await verifySignupOtp(channel, recipient, code);
-
-      setOtpStates((current) => ({
+      const response = await verifySignupOtp("email", normalizedEmail, emailOtp.trim());
+      setEmailVerification((current) => ({
         ...current,
-        [channel]: {
-          ...current[channel],
-          recipient,
-          requested: true,
-          verified: true,
-          message: response.message,
-        },
+        recipient: normalizedEmail,
+        requested: true,
+        verified: true,
+        message: response.message,
       }));
-
       setMessage(response.message);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unable to verify OTP.";
-      setOtpStates((current) => ({
+      setEmailVerification((current) => ({
         ...current,
-        [channel]: {
-          ...current[channel],
-          verified: false,
-          message: errorMessage,
-        },
+        verified: false,
+        message: errorMessage,
       }));
       setMessage(errorMessage);
     } finally {
-      setOtpPending((current) => ({ ...current, [channel]: false }));
+      setOtpPending(false);
     }
   }
 
@@ -241,7 +170,7 @@ export function AuthPanel({ staffMode = false }: AuthPanelProps) {
     event.preventDefault();
 
     if (mode === "signup" && !signupReady) {
-      setMessage("Verify both email OTP and phone OTP before creating the account.");
+      setMessage("Verify your email OTP before creating the account.");
       return;
     }
 
@@ -279,42 +208,36 @@ export function AuthPanel({ staffMode = false }: AuthPanelProps) {
     }
   }
 
-  function renderOtpCard(channel: OtpChannel) {
-    const copy = otpCopy(channel);
-    const state = otpStates[channel];
-    const code = channel === "email" ? emailOtp : phoneOtp;
-    const setCode = channel === "email" ? setEmailOtp : setPhoneOtp;
-    const recipient = channel === "email" ? normalizedEmail : normalizedPhone;
-
+  function renderEmailOtpCard() {
     return (
       <div className="rounded-[28px] border border-black/8 bg-white/75 p-4 shadow-[0_18px_40px_rgba(17,17,17,0.04)]">
         <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
           <label className="grid gap-2 text-sm text-[#3c3c3c]">
-            {copy.label}
+            Email
             <input
               required
-              type={channel === "email" ? "email" : "tel"}
-              value={channel === "email" ? email : phone}
-              onChange={(event) => (channel === "email" ? setEmail(event.target.value) : setPhone(event.target.value))}
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
               className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
             />
           </label>
           <button
             type="button"
-            onClick={() => handleRequestOtp(channel)}
-            disabled={otpPending[channel] || !recipient}
+            onClick={handleRequestEmailOtp}
+            disabled={otpPending || !normalizedEmail}
             className="premium-button px-5 py-3 text-sm font-medium disabled:opacity-60"
           >
-            {otpPending[channel] ? "Sending..." : state.requested ? copy.resend : copy.action}
+            {otpPending ? "Sending..." : emailVerification.requested ? "Resend email OTP" : "Send email OTP"}
           </button>
         </div>
 
         <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
           <label className="grid gap-2 text-sm text-[#3c3c3c]">
-            {copy.label} OTP
+            Email OTP
             <input
-              value={code}
-              onChange={(event) => setCode(event.target.value)}
+              value={emailOtp}
+              onChange={(event) => setEmailOtp(event.target.value)}
               maxLength={6}
               inputMode="numeric"
               placeholder="Enter 6-digit code"
@@ -323,27 +246,27 @@ export function AuthPanel({ staffMode = false }: AuthPanelProps) {
           </label>
           <button
             type="button"
-            onClick={() => handleVerifyOtp(channel)}
-            disabled={otpPending[channel] || !state.requested || state.verified}
+            onClick={handleVerifyEmailOtp}
+            disabled={otpPending || !emailVerification.requested || emailVerification.verified}
             className="premium-button px-5 py-3 text-sm font-medium disabled:opacity-60"
           >
-            {otpPending[channel] ? "Checking..." : state.verified ? copy.verified : copy.verify}
+            {otpPending ? "Checking..." : emailVerification.verified ? "Email verified" : "Verify email"}
           </button>
         </div>
 
         <div className="mt-3 grid gap-2 text-xs leading-6 text-[#6b6b6b]">
           <p>
-            {state.message ||
-              (state.verified
-                ? `${copy.label} verification completed.`
-                : state.requested
-                  ? `${copy.label} OTP sent. Enter the six-digit code to continue.`
-                  : copy.helper)}
+            {emailVerification.message ||
+              (emailVerification.verified
+                ? "Email verification completed."
+                : emailVerification.requested
+                  ? "Email OTP sent. Enter the six-digit code to continue."
+                  : "We send a six-digit verification code to confirm this address before account creation.")}
           </p>
-          {state.expiresInMinutes ? <p>OTP expires in {state.expiresInMinutes} minutes.</p> : null}
-          {state.debugCode ? (
+          {emailVerification.expiresInMinutes ? <p>OTP expires in {emailVerification.expiresInMinutes} minutes.</p> : null}
+          {emailVerification.debugCode ? (
             <p className="rounded-2xl border border-[#c8a97e]/30 bg-[#f9f3ea] px-3 py-2 text-[#8f6532]">
-              Debug OTP: <span className="font-semibold tracking-[0.2em]">{state.debugCode}</span>
+              Debug OTP: <span className="font-semibold tracking-[0.2em]">{emailVerification.debugCode}</span>
             </p>
           ) : null}
         </div>
@@ -361,7 +284,7 @@ export function AuthPanel({ staffMode = false }: AuthPanelProps) {
         <p className="mt-4 max-w-2xl text-sm leading-7 text-[#5d5d5d]">
           {staffMode
             ? "Internal staff accounts are separated from the public auth flow. Use your studio credentials to open the architect workspace or admin control panel."
-            : "Public sign up is reserved for clients and onboarding users. Internal staff roles stay behind a separate login path, and new client accounts require both email and phone OTP verification."}
+            : "Public sign up is reserved for clients and onboarding users. Internal staff roles stay behind a separate login path, and new client accounts require email OTP verification before creation."}
         </p>
 
         {!staffMode ? (
@@ -406,10 +329,18 @@ export function AuthPanel({ staffMode = false }: AuthPanelProps) {
                 />
               </label>
 
-              {renderOtpCard("email")}
-              {renderOtpCard("phone")}
+              {renderEmailOtpCard()}
 
               <div className="grid gap-4 md:grid-cols-2">
+                <label className="grid gap-2 text-sm text-[#3c3c3c]">
+                  Phone / WhatsApp
+                  <input
+                    required
+                    value={phone}
+                    onChange={(event) => setPhone(event.target.value)}
+                    className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
+                  />
+                </label>
                 <label className="grid gap-2 text-sm text-[#3c3c3c]">
                   Studio / Company
                   <input
@@ -418,17 +349,18 @@ export function AuthPanel({ staffMode = false }: AuthPanelProps) {
                     className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
                   />
                 </label>
-                <label className="grid gap-2 text-sm text-[#3c3c3c]">
-                  Password
-                  <input
-                    required
-                    type="password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
-                  />
-                </label>
               </div>
+
+              <label className="grid gap-2 text-sm text-[#3c3c3c]">
+                Password
+                <input
+                  required
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
+                />
+              </label>
             </>
           ) : (
             <>
@@ -483,7 +415,7 @@ export function AuthPanel({ staffMode = false }: AuthPanelProps) {
           <div className="mt-4 grid gap-3 text-sm leading-7 text-[#5d5d5d]">
             <p>Clients can onboard directly, track assigned projects, and review invoices without seeing staff-only operations.</p>
             <p>Architect and admin accounts remain internal and route into secure role-based workspaces.</p>
-            <p>Email OTP and phone OTP both gate public signup, while avatar fallbacks and JWT-backed sessions stay wired into the platform.</p>
+            <p>Email OTP gates public signup, while the phone number is still captured for coordination, project updates, and future verification upgrades.</p>
           </div>
         </div>
 
