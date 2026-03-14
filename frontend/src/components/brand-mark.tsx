@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 type BrandMarkProps = {
@@ -8,11 +9,15 @@ type BrandMarkProps = {
 export function BrandMark({ compact = false, className }: BrandMarkProps) {
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-[#111111] shadow-[0_14px_40px_rgba(17,17,17,0.2)]">
-        <div className="absolute inset-[1px] rounded-full border border-white/6" />
-        <span className="display-title bg-[linear-gradient(135deg,#f8edcf_0%,#c8a97e_45%,#8f6532_100%)] bg-clip-text text-2xl font-semibold tracking-[-0.08em] text-transparent">
-          AA
-        </span>
+      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-black/8 bg-white shadow-[0_14px_40px_rgba(17,17,17,0.12)]">
+        <Image
+          src="/brand/logo.jpeg"
+          alt="Art and Architecture Studios logo"
+          fill
+          sizes="48px"
+          className="object-cover"
+          priority
+        />
       </div>
       {!compact ? (
         <div>

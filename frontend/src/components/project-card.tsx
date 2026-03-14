@@ -30,7 +30,7 @@ export function ProjectCard({ project }: { project: ProjectData }) {
             <h3 className="display-title text-3xl">{project.title}</h3>
             <p className="mt-2 text-sm text-white/75">{project.location}</p>
           </div>
-          <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.24em]">
+          <span className="rounded-full border border-white/18 bg-white/14 px-3 py-1 text-xs uppercase tracking-[0.24em] text-white shadow-[0_10px_30px_rgba(0,0,0,0.12)] backdrop-blur-md">
             {project.status}
           </span>
         </div>
@@ -43,7 +43,7 @@ export function ProjectCard({ project }: { project: ProjectData }) {
           </div>
           <Link
             href={`/projects/${project.slug}`}
-            className="premium-button px-4 py-2 text-sm"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-[#c8a97e]/42 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(200,169,126,0.18))] px-4 py-2 text-sm font-medium text-[#111111] shadow-[0_14px_34px_rgba(200,169,126,0.16)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-[#c8a97e]/62 hover:bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(200,169,126,0.24))] hover:shadow-[0_18px_40px_rgba(200,169,126,0.22)]"
           >
             Open project
             <ArrowUpRight size={16} />
