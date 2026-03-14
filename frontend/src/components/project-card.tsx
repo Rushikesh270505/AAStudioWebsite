@@ -43,7 +43,7 @@ export function ProjectCard({ project }: { project: ProjectData }) {
           </div>
           <Link
             href={`/projects/${project.slug}`}
-            className="inline-flex items-center gap-2 rounded-full bg-[#111111] px-4 py-2 text-sm text-white"
+            className="premium-button px-4 py-2 text-sm"
           >
             Open project
             <ArrowUpRight size={16} />

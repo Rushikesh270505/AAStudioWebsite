@@ -67,7 +67,7 @@ export function LoginPanel() {
           <button
             type="submit"
             disabled={isPending}
-            className="rounded-full bg-[#111111] px-6 py-3 text-sm font-medium text-white disabled:opacity-60"
+            className="premium-button px-6 py-3 text-sm font-medium disabled:opacity-60"
           >
             {isPending ? "Signing in..." : "Sign in"}
           </button>

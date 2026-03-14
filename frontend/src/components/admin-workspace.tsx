@@ -92,7 +92,7 @@ export function AdminWorkspace() {
 
         <div className="mt-6 flex items-center justify-between gap-4">
           <p className="text-sm text-[#5d5d5d]">{message}</p>
-          <button type="submit" className="rounded-full bg-[#111111] px-6 py-3 text-sm font-medium text-white">
+          <button type="submit" className="premium-button px-6 py-3 text-sm font-medium">
             Create project
           </button>
         </div>
@@ -109,7 +109,7 @@ export function AdminWorkspace() {
                     <p className="display-title text-2xl">{project.title}</p>
                     <p className="mt-1 text-sm text-[#5d5d5d]">{project.location}</p>
                   </div>
-                  <span className="rounded-full bg-[#111111] px-3 py-1 text-xs uppercase tracking-[0.24em] text-white">
+                  <span className="premium-badge px-3 py-1 text-xs uppercase tracking-[0.24em]">
                     {project.status}
                   </span>
                 </div>

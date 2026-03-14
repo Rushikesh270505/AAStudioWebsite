@@ -41,10 +41,10 @@ export function ProjectViewer() {
               key={project.slug}
               type="button"
               onClick={() => setActiveProject(project)}
-              className={`rounded-[24px] border px-4 py-4 text-left transition-colors ${
+              className={`rounded-[24px] border px-4 py-4 text-left transition-all backdrop-blur-md ${
                 activeProject.slug === project.slug
-                  ? "border-[#111111] bg-[#111111] text-white"
-                  : "border-black/10 bg-white/70 text-[#222222] hover:border-[#c8a97e]"
+                  ? "border-[#c8a97e]/42 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(200,169,126,0.2))] text-[#111111] shadow-[0_14px_32px_rgba(200,169,126,0.16)]"
+                  : "border-black/10 bg-white/70 text-[#222222] hover:border-[#c8a97e]/42 hover:bg-white/82"
               }`}
             >
               <p className="text-xs uppercase tracking-[0.24em] opacity-70">{project.projectType}</p>

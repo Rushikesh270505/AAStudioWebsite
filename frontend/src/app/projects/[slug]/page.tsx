@@ -171,7 +171,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
                 <div key={item.title} className="rounded-[24px] border border-black/8 bg-white/60 p-5">
                   <div className="flex items-center justify-between gap-3">
                     <h3 className="display-title text-2xl">{item.title}</h3>
-                    <span className="rounded-full bg-[#111111] px-3 py-1 text-xs uppercase tracking-[0.24em] text-white">
+                    <span className="premium-badge px-3 py-1 text-xs uppercase tracking-[0.24em]">
                       {item.status}
                     </span>
                   </div>

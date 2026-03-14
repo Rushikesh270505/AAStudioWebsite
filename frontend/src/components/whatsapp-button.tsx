@@ -6,9 +6,9 @@ export function WhatsAppButton() {
       href="https://wa.me/919876543210"
       target="_blank"
       rel="noreferrer"
-      className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-3 rounded-full bg-[#111111] px-5 py-3 text-sm font-medium text-white shadow-[0_24px_60px_rgba(17,17,17,0.22)] transition-transform hover:-translate-y-1"
+      className="premium-button fixed bottom-5 right-5 z-40 px-5 py-3 text-sm font-medium"
     >
-      <MessageCircleMore size={18} className="text-[#c8a97e]" />
+      <MessageCircleMore size={18} className="text-[#8f6532]" />
       WhatsApp
     </a>
   );

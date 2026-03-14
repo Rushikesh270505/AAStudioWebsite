@@ -55,7 +55,7 @@ export default function DashboardPage() {
                   <div key={invoice.id} className="rounded-[24px] border border-black/8 bg-white/60 p-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="display-title text-2xl">{invoice.id}</p>
-                      <span className="rounded-full bg-[#111111] px-3 py-1 text-xs uppercase tracking-[0.24em] text-white">
+                      <span className="premium-badge px-3 py-1 text-xs uppercase tracking-[0.24em]">
                         {invoice.status}
                       </span>
                     </div>

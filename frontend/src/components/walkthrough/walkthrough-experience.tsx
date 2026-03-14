@@ -185,7 +185,7 @@ export function WalkthroughExperience() {
         <button
           id="walkthrough-launch"
           type="button"
-          className="mt-6 rounded-full bg-[#111111] px-5 py-3 text-sm font-medium text-white"
+          className="premium-button mt-6 px-5 py-3 text-sm font-medium"
         >
           Click here, then click inside the scene
         </button>
