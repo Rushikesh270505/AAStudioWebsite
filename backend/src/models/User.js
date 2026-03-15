@@ -66,6 +66,16 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    archivedEmail: {
+      type: String,
+      trim: true,
+      lowercase: true,
+    },
+    archivedPhone: {
+      type: String,
+      trim: true,
+    },
+    archivedAt: Date,
     specializationTags: [String],
     bio: String,
     isActive: {

@@ -7,6 +7,9 @@ export type UserProfile = {
   name?: string;
   username?: string;
   email: string;
+  archivedEmail?: string;
+  archivedPhone?: string;
+  archivedAt?: string;
   role: Role;
   studioName?: string;
   phone?: string;

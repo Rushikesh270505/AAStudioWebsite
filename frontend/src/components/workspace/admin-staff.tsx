@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { AdminShell } from "@/components/workspace/admin-shell";
 import { MetricCard } from "@/components/workspace/metric-card";
 import { PresenceIndicator } from "@/components/workspace/presence-indicator";
-import { createArchitectAccount, fetchUsers, removeArchitectAccount } from "@/lib/api";
+import { archiveArchitectAccount, createArchitectAccount, fetchUsers, terminateArchitectAccount } from "@/lib/api";
 import type { UserProfile } from "@/lib/platform-types";
 
 type ArchitectFormState = {
@@ -23,6 +23,10 @@ const emptyForm: ArchitectFormState = {
   companyArchitectId: "",
 };
 
+function getUserKey(user: UserProfile) {
+  return user._id || user.id;
+}
+
 function StaffManagementContent({ token }: { token: string }) {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [architectForm, setArchitectForm] = useState<ArchitectFormState>(emptyForm);
@@ -30,7 +34,8 @@ function StaffManagementContent({ token }: { token: string }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [removingId, setRemovingId] = useState("");
+  const [archivingId, setArchivingId] = useState("");
+  const [terminatingId, setTerminatingId] = useState("");
 
   async function loadUsers() {
     try {
@@ -89,25 +94,51 @@ function StaffManagementContent({ token }: { token: string }) {
     }
   }
 
-  async function handleRemoveArchitect(architect: UserProfile) {
+  async function handleArchiveArchitect(architect: UserProfile) {
     const label = architect.username || architect.fullName || architect.email;
-    const confirmed = window.confirm(`Remove architect access for ${label}? Existing project history will stay intact.`);
+    const confirmed = window.confirm(
+      `Archive ${label}? This removes portal access and architect ID, but keeps email and phone in the archive for future contact.`,
+    );
 
     if (!confirmed) {
       return;
     }
 
-    setRemovingId(architect.id);
+    setArchivingId(getUserKey(architect));
     setMessage("");
 
     try {
-      const response = await removeArchitectAccount(token, architect.id);
+      const response = await archiveArchitectAccount(token, getUserKey(architect));
       setMessage(response.message);
       await loadUsers();
-    } catch (removeError) {
-      setMessage(removeError instanceof Error ? removeError.message : "Unable to remove architect access.");
+    } catch (archiveError) {
+      setMessage(archiveError instanceof Error ? archiveError.message : "Unable to archive architect access.");
     } finally {
-      setRemovingId("");
+      setArchivingId("");
+    }
+  }
+
+  async function handleTerminateArchitect(architect: UserProfile) {
+    const label = architect.username || architect.fullName || architect.email;
+    const confirmed = window.confirm(
+      `Terminate ${label} permanently? This deletes the architect credentials and architect-owned data. This cannot be undone.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setTerminatingId(getUserKey(architect));
+    setMessage("");
+
+    try {
+      const response = await terminateArchitectAccount(token, getUserKey(architect));
+      setMessage(response.message);
+      await loadUsers();
+    } catch (terminateError) {
+      setMessage(terminateError instanceof Error ? terminateError.message : "Unable to terminate architect.");
+    } finally {
+      setTerminatingId("");
     }
   }
 
@@ -190,7 +221,7 @@ function StaffManagementContent({ token }: { token: string }) {
               Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-28 animate-pulse rounded-[24px] bg-white/60" />)
             ) : activeArchitects.length ? (
               activeArchitects.map((staffMember) => (
-                <div key={staffMember.id} className="rounded-[24px] border border-black/8 bg-white/70 p-5">
+                <div key={getUserKey(staffMember)} className="rounded-[24px] border border-black/8 bg-white/70 p-5">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                       <div className="flex flex-wrap items-center gap-3">
@@ -208,11 +239,19 @@ function StaffManagementContent({ token }: { token: string }) {
                       </span>
                       <button
                         type="button"
-                        onClick={() => handleRemoveArchitect(staffMember)}
-                        disabled={removingId === staffMember.id}
+                        onClick={() => handleArchiveArchitect(staffMember)}
+                        disabled={archivingId === getUserKey(staffMember) || terminatingId === getUserKey(staffMember)}
                         className="rounded-full border border-[#d5b48a]/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(244,229,208,0.88))] px-4 py-2 text-sm font-medium text-[#7d5330] transition hover:shadow-[0_12px_24px_rgba(200,169,126,0.16)] disabled:opacity-60"
                       >
-                        {removingId === staffMember.id ? "Removing..." : "Remove architect"}
+                        {archivingId === getUserKey(staffMember) ? "Archiving..." : "Archive"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleTerminateArchitect(staffMember)}
+                        disabled={archivingId === getUserKey(staffMember) || terminatingId === getUserKey(staffMember)}
+                        className="rounded-full border border-[#d28d82]/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(246,222,216,0.88))] px-4 py-2 text-sm font-medium text-[#8f3f32] transition hover:shadow-[0_12px_24px_rgba(210,141,130,0.16)] disabled:opacity-60"
+                      >
+                        {terminatingId === getUserKey(staffMember) ? "Terminating..." : "Terminate"}
                       </button>
                     </div>
                   </div>
@@ -250,9 +289,13 @@ function StaffManagementContent({ token }: { token: string }) {
           <div className="mt-5 grid gap-3">
             {archivedArchitects.length ? (
               archivedArchitects.map((architect) => (
-                <div key={architect.id} className="rounded-[24px] border border-black/8 bg-white/70 p-5">
-                  <p className="text-lg font-semibold text-[#111111]">{architect.username || architect.fullName}</p>
-                  <p className="mt-1 text-sm text-[#5d5d5d]">{architect.email}</p>
+                <div key={getUserKey(architect)} className="rounded-[24px] border border-black/8 bg-white/70 p-5">
+                  <p className="text-lg font-semibold text-[#111111]">{architect.fullName || architect.username}</p>
+                  <p className="mt-1 text-sm text-[#5d5d5d]">{architect.archivedEmail || architect.email}</p>
+                  {architect.archivedPhone ? <p className="mt-1 text-sm text-[#5d5d5d]">{architect.archivedPhone}</p> : null}
+                  <p className="mt-3 text-xs uppercase tracking-[0.22em] text-[#8f6532]">
+                    Archived {architect.archivedAt ? new Date(architect.archivedAt).toLocaleDateString() : ""}
+                  </p>
                 </div>
               ))
             ) : (

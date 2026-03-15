@@ -288,8 +288,15 @@ export function createArchitectAccount(
   });
 }
 
-export function removeArchitectAccount(token: string, userId: string) {
-  return request<{ message: string; user: UserProfile }>(`/users/architects/${userId}`, {
+export function archiveArchitectAccount(token: string, userId: string) {
+  return request<{ message: string; user: UserProfile }>(`/users/architects/${userId}/archive`, {
+    method: "POST",
+    headers: authHeaders(token),
+  });
+}
+
+export function terminateArchitectAccount(token: string, userId: string) {
+  return request<{ message: string }>(`/users/architects/${userId}/terminate`, {
     method: "DELETE",
     headers: authHeaders(token),
   });

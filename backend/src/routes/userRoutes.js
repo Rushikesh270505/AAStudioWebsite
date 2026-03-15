@@ -4,7 +4,8 @@ const {
   listUsers,
   updateProfile,
   createArchitect,
-  removeArchitect,
+  archiveArchitect,
+  terminateArchitect,
   updateUserStatus,
   createInvite,
   listInvites,
@@ -17,7 +18,8 @@ router.get("/architects", protect, authorize("architect", "admin"), listArchitec
 router.patch("/profile", protect, updateProfile);
 router.get("/", protect, authorize("admin"), listUsers);
 router.post("/architects", protect, authorize("admin"), createArchitect);
-router.delete("/architects/:id", protect, authorize("admin"), removeArchitect);
+router.post("/architects/:id/archive", protect, authorize("admin"), archiveArchitect);
+router.delete("/architects/:id/terminate", protect, authorize("admin"), terminateArchitect);
 router.patch("/:id/status", protect, authorize("admin"), updateUserStatus);
 router.get("/invites", protect, authorize("admin"), listInvites);
 router.post("/invites", protect, authorize("admin"), createInvite);
