@@ -8,6 +8,10 @@ const meetingSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    subject: {
+      type: String,
+      trim: true,
+    },
     project: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Project",
@@ -23,13 +27,19 @@ const meetingSchema = new mongoose.Schema(
       },
     ],
     notes: String,
+    description: String,
     status: {
       type: String,
       enum: MEETING_STATUSES,
       default: "SCHEDULED",
     },
     location: String,
+    meetLink: String,
     outcome: String,
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
   {
     timestamps: true,

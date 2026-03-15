@@ -14,6 +14,7 @@ const meetingRoutes = require("./routes/meetingRoutes");
 const siteVisitRoutes = require("./routes/siteVisitRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const userRoutes = require("./routes/userRoutes");
+const workReportRoutes = require("./routes/workReportRoutes");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
@@ -71,6 +72,7 @@ app.use("/api/meetings", meetingRoutes);
 app.use("/api/site-visits", siteVisitRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/work-reports", workReportRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -5,6 +5,6 @@ const { protect, authorize } = require("../middleware/auth");
 const router = express.Router();
 
 router.get("/", protect, authorize("client", "architect", "admin"), listMeetings);
-router.post("/", protect, authorize("architect", "admin"), createMeeting);
+router.post("/", protect, authorize("admin"), createMeeting);
 
 module.exports = router;

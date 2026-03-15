@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, LogOut, Search } from "lucide-react";
-import { clearSession, getWorkspacePath } from "@/lib/auth";
+import { useState } from "react";
+import { logoutCurrentUser } from "@/lib/api";
+import { clearSession, getStoredToken, getWorkspacePath } from "@/lib/auth";
 import type { NotificationItem, UserProfile } from "@/lib/platform-types";
 import { cn } from "@/lib/utils";
+import { PresenceIndicator } from "@/components/workspace/presence-indicator";
 
 type NavItem = {
   href: string;
@@ -32,6 +35,28 @@ export function WorkspaceShell({
   const pathname = usePathname();
   const router = useRouter();
   const displayName = user.fullName || user.username || user.email;
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutMessage, setSignOutMessage] = useState("");
+
+  async function handleSignOut() {
+    setSigningOut(true);
+    setSignOutMessage("");
+
+    try {
+      const token = getStoredToken();
+
+      if (token) {
+        await logoutCurrentUser(token);
+      }
+
+      clearSession();
+      router.push("/auth");
+    } catch (error) {
+      setSignOutMessage(error instanceof Error ? error.message : "Unable to sign out right now.");
+    } finally {
+      setSigningOut(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f7f4ee_0%,#f3f0ea_45%,#f8f6f2_100%)]">
@@ -46,6 +71,14 @@ export function WorkspaceShell({
             <div>
               <p className="text-xs uppercase tracking-[0.24em] text-[#8f6532]">{user.role.replace(/_/g, " ")}</p>
               <p className="display-title text-2xl text-[#111111]">{displayName}</p>
+              {user.role === "architect" ? (
+                <div className="mt-2">
+                  <PresenceIndicator
+                    online={user.isOnline}
+                    label={`${displayName} ${user.isOnline ? "online" : "offline"}`}
+                  />
+                </div>
+              ) : null}
             </div>
           </Link>
 
@@ -73,14 +106,13 @@ export function WorkspaceShell({
           <button
             type="button"
             className="premium-button-soft mt-6 w-full px-4 py-3 text-sm"
-            onClick={() => {
-              clearSession();
-              router.push("/auth");
-            }}
+            onClick={() => void handleSignOut()}
+            disabled={signingOut}
           >
             <LogOut size={16} />
-            Sign out
+            {signingOut ? "Signing out..." : "Sign out"}
           </button>
+          {signOutMessage ? <p className="mt-3 text-sm leading-6 text-[#8f6532]">{signOutMessage}</p> : null}
         </aside>
 
         <div className="p-4 md:p-6">

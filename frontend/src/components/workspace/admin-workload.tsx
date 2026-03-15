@@ -1,10 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { AdminShell } from "@/components/workspace/admin-shell";
 import { MetricCard } from "@/components/workspace/metric-card";
-import { fetchArchitectDirectory } from "@/lib/api";
-import type { UserProfile } from "@/lib/platform-types";
+import { PresenceIndicator } from "@/components/workspace/presence-indicator";
+import { fetchArchitectDirectory, fetchArchitectReportBundles } from "@/lib/api";
+import type { ArchitectReportBundle, UserProfile } from "@/lib/platform-types";
 
 type ArchitectDirectoryEntry = UserProfile & {
   workload: {
@@ -16,6 +18,7 @@ type ArchitectDirectoryEntry = UserProfile & {
 
 function WorkloadContent({ token }: { token: string }) {
   const [architects, setArchitects] = useState<ArchitectDirectoryEntry[]>([]);
+  const [reportBundles, setReportBundles] = useState<ArchitectReportBundle[]>([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -23,9 +26,10 @@ function WorkloadContent({ token }: { token: string }) {
 
     async function loadWorkload() {
       try {
-        const payload = await fetchArchitectDirectory(token);
+        const [payload, reportPayload] = await Promise.all([fetchArchitectDirectory(token), fetchArchitectReportBundles(token)]);
         if (!cancelled) {
           setArchitects(payload);
+          setReportBundles(reportPayload);
           setError("");
         }
       } catch (loadError) {
@@ -85,7 +89,10 @@ function WorkloadContent({ token }: { token: string }) {
                 <div key={architect.id} className="rounded-[26px] border border-black/8 bg-white/72 p-5 shadow-[0_14px_30px_rgba(17,17,17,0.04)]">
                   <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                     <div>
-                      <p className="text-lg font-semibold text-[#111111]">{architect.username || architect.fullName}</p>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <p className="text-lg font-semibold text-[#111111]">{architect.username || architect.fullName}</p>
+                        <PresenceIndicator online={architect.isOnline} />
+                      </div>
                       <p className="mt-1 text-sm text-[#5d5d5d]">{architect.email}</p>
                       <p className="mt-2 text-xs uppercase tracking-[0.22em] text-[#8f6532]">
                         {architect.companyArchitectId || "Architect ID pending"}
@@ -132,6 +139,45 @@ function WorkloadContent({ token }: { token: string }) {
                           style={{ width: `${reviewRatio}%` }}
                         />
                       </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 rounded-[22px] border border-black/8 bg-white/78 p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="text-xs uppercase tracking-[0.2em] text-[#8f6532]">Latest reports</p>
+                      <p className="text-sm text-[#5d5d5d]">
+                        Last report{" "}
+                        {architect.lastReportAt ? new Date(architect.lastReportAt).toLocaleDateString() : "pending"}
+                      </p>
+                    </div>
+                    <div className="mt-4 grid gap-3">
+                      {(reportBundles.find((item) => item.architect.id === architect.id)?.reports || []).slice(0, 3).map((report) => (
+                        <div key={report._id} className="rounded-[18px] border border-black/8 bg-white/85 p-4">
+                          <div className="flex items-center justify-between gap-4">
+                            <p className="text-xs uppercase tracking-[0.18em] text-[#8f6532]">{report.reportDateKey}</p>
+                            <p className="text-sm text-[#5d5d5d]">{new Date(report.createdAt).toLocaleTimeString()}</p>
+                          </div>
+                          <p className="mt-3 text-sm leading-7 text-[#4f4f4f]">{report.summary}</p>
+                          {report.images.length ? (
+                            <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-3">
+                              {report.images.map((image) => (
+                                <Image
+                                  key={`${report._id}-${image.name}`}
+                                  src={image.dataUrl}
+                                  alt={image.name}
+                                  width={160}
+                                  height={80}
+                                  unoptimized
+                                  className="h-20 w-full rounded-[14px] object-cover"
+                                />
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      ))}
+                      {!reportBundles.find((item) => item.architect.id === architect.id)?.reports?.length ? (
+                        <p className="text-sm text-[#5d5d5d]">No reports submitted yet.</p>
+                      ) : null}
                     </div>
                   </div>
                 </div>

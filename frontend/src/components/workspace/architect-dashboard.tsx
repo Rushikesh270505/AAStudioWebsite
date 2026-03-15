@@ -59,7 +59,11 @@ function ArchitectDashboardContent({ token, user }: { token: string; user: UserP
       user={user}
       title="Architect dashboard"
       description="Claim new work, monitor active commissions, prepare review-ready submissions, and keep delivery organized with a cleaner studio-facing board."
-      navItems={[{ href: "/architect/dashboard", label: "Dashboard" }]}
+      navItems={[
+        { href: "/architect/dashboard", label: "Dashboard" },
+        { href: "/architect/meetings", label: "Meetings" },
+        { href: "/architect/reports", label: "Reports" },
+      ]}
       notifications={payload?.notifications || []}
       actions={
         <Link href="/projects" className="premium-button px-4 py-2 text-sm font-medium">

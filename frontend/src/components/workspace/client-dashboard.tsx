@@ -43,7 +43,10 @@ function ClientDashboardContent({ token, user }: { token: string; user: UserProf
       user={user}
       title="Client dashboard"
       description="Track assigned projects, review files, inspect progress updates, and stay aligned on meetings, invoices, and delivery checkpoints."
-      navItems={[{ href: "/client/dashboard", label: "Overview" }]}
+      navItems={[
+        { href: "/client/dashboard", label: "Overview" },
+        { href: "/client/meetings", label: "Meetings" },
+      ]}
       notifications={payload?.notifications || []}
       actions={
         <Link href="/contact" className="premium-button px-4 py-2 text-sm font-medium">

@@ -15,6 +15,7 @@ export const adminNavItems = [
   { href: "/admin/publish-work", label: "Publish Work" },
   { href: "/admin/staff", label: "Staff" },
   { href: "/admin/workload", label: "Workload" },
+  { href: "/admin/meetings", label: "Meetings" },
   { href: "/admin/inquiries", label: "Inquiries" },
 ];
 

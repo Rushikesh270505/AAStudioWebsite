@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { AdminShell } from "@/components/workspace/admin-shell";
 import { MetricCard } from "@/components/workspace/metric-card";
+import { PresenceIndicator } from "@/components/workspace/presence-indicator";
 import { createArchitectAccount, fetchUsers, removeArchitectAccount } from "@/lib/api";
 import type { UserProfile } from "@/lib/platform-types";
 
@@ -192,7 +193,10 @@ function StaffManagementContent({ token }: { token: string }) {
                 <div key={staffMember.id} className="rounded-[24px] border border-black/8 bg-white/70 p-5">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                      <p className="text-lg font-semibold text-[#111111]">{staffMember.username || staffMember.fullName}</p>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <p className="text-lg font-semibold text-[#111111]">{staffMember.username || staffMember.fullName}</p>
+                        <PresenceIndicator online={staffMember.isOnline} />
+                      </div>
                       <p className="mt-1 text-sm text-[#5d5d5d]">{staffMember.email}</p>
                       <p className="mt-3 text-xs uppercase tracking-[0.22em] text-[#8f6532]">
                         {staffMember.companyArchitectId || "Architect ID pending"}

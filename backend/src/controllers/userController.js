@@ -7,7 +7,7 @@ const { createNotifications, logAudit } = require("../utils/activity");
 
 async function listArchitects(req, res) {
   const architects = await User.find({ role: "architect", isActive: true })
-    .select("fullName name username email role avatarUrl avatarSeed companyArchitectId specializationTags studioName")
+    .select("fullName name username email role avatarUrl avatarSeed companyArchitectId specializationTags studioName isOnline lastLoginAt lastReportAt")
     .sort({ fullName: 1 });
 
   const projects = await Project.find({ mainArchitect: { $in: architects.map((architect) => architect._id) } }).select(
@@ -96,17 +96,29 @@ async function createArchitect(req, res) {
 }
 
 async function removeArchitect(req, res) {
-  const architect = await User.findOne({ _id: req.params.id, role: "architect" }).select("-password");
+  const architect = await User.findOne({ _id: req.params.id, role: "architect" }).select("+password");
 
   if (!architect) {
     return res.status(404).json({ message: "Architect not found." });
   }
 
-  if (!architect.isActive) {
+  if (architect.email.endsWith("@removed.local")) {
     return res.status(400).json({ message: "Architect access has already been removed." });
   }
 
+  const scrubSuffix = `${architect._id.toString()}-${Date.now()}`;
+  const preservedName = architect.fullName || architect.username || "Archived architect";
+
   architect.isActive = false;
+  architect.isOnline = false;
+  architect.email = `archived-${scrubSuffix}@removed.local`;
+  architect.username = `archived-${scrubSuffix}`;
+  architect.password = crypto.randomBytes(24).toString("hex");
+  architect.phone = "";
+  architect.avatarSeed = `archived-${scrubSuffix}`;
+  architect.avatarUrl = buildAvatarUrl(architect.avatarSeed);
+  architect.fullName = preservedName;
+  architect.name = preservedName;
   await architect.save();
 
   await logAudit({

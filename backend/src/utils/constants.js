@@ -42,6 +42,7 @@ const NOTIFICATION_TYPES = [
   "PROJECT_UPDATE",
   "LEAD_CAPTURED",
   "INVITE_CREATED",
+  "WORK_REPORT_SUBMITTED",
 ];
 
 module.exports = {

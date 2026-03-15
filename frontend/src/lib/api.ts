@@ -1,5 +1,6 @@
 import type {
   AdminDashboardPayload,
+  ArchitectReportBundle,
   ArchitectDashboardPayload,
   AuthResponse,
   ClientDashboardPayload,
@@ -15,6 +16,7 @@ import type {
   ProjectUpdate,
   SiteVisit,
   UserProfile,
+  WorkReport,
 } from "@/lib/platform-types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
@@ -71,6 +73,13 @@ export function staffLoginUser(identifier: string, password: string) {
   return request<AuthResponse>("/auth/staff-login", {
     method: "POST",
     body: JSON.stringify({ identifier, password }),
+  });
+}
+
+export function logoutCurrentUser(token: string) {
+  return request<{ message: string }>("/auth/logout", {
+    method: "POST",
+    headers: authHeaders(token),
   });
 }
 
@@ -370,6 +379,38 @@ export function submitContactLead(payload: {
 
 export function fetchContactLeads(token: string) {
   return request<ContactLead[]>("/contact", {
+    headers: authHeaders(token),
+  });
+}
+
+export function createWorkReport(
+  token: string,
+  payload: {
+    summary: string;
+    images: Array<{ name: string; dataUrl: string }>;
+  },
+) {
+  return request<WorkReport>("/work-reports", {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify(payload),
+  });
+}
+
+export function fetchMyWorkReports(token: string) {
+  return request<WorkReport[]>("/work-reports/my", {
+    headers: authHeaders(token),
+  });
+}
+
+export function fetchArchitectReportStatus(token: string) {
+  return request<{ hasReportedForSession: boolean; lastReportAt: string | null }>("/work-reports/status", {
+    headers: authHeaders(token),
+  });
+}
+
+export function fetchArchitectReportBundles(token: string) {
+  return request<ArchitectReportBundle[]>("/work-reports/architects", {
     headers: authHeaders(token),
   });
 }

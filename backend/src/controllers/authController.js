@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const User = require("../models/User");
 const VerificationCode = require("../models/VerificationCode");
+const WorkReport = require("../models/WorkReport");
 const env = require("../config/env");
 const { buildAvatarUrl } = require("../utils/avatar");
 const { isAllowedAdminUsername } = require("../utils/adminAccounts");
@@ -73,8 +74,22 @@ function sanitizeUser(user) {
     avatarUrl: user.avatarUrl,
     companyArchitectId: user.companyArchitectId,
     isActive: user.isActive,
+    isOnline: user.isOnline,
+    lastLoginAt: user.lastLoginAt,
+    lastReportAt: user.lastReportAt,
     specializationTags: user.specializationTags || [],
   };
+}
+
+async function markArchitectOnline(user) {
+  if (user.role !== "architect") {
+    return user;
+  }
+
+  user.isOnline = true;
+  user.lastLoginAt = new Date();
+  await user.save();
+  return user;
 }
 
 async function register(req, res) {
@@ -172,6 +187,7 @@ async function login(req, res) {
   }
 
   assertAdminAccountAllowed(user);
+  await markArchitectOnline(user);
 
   const token = signToken(user._id.toString());
 
@@ -205,6 +221,7 @@ async function staffLogin(req, res) {
   }
 
   assertAdminAccountAllowed(user);
+  await markArchitectOnline(user);
 
   const token = signToken(user._id.toString());
   return res.json({
@@ -370,6 +387,7 @@ async function loginWithOtp(req, res) {
   }
 
   assertAdminAccountAllowed(user);
+  await markArchitectOnline(user);
 
   verification.verifiedAt = new Date();
   await verification.save();
@@ -387,6 +405,25 @@ async function getCurrentUser(req, res) {
   });
 }
 
+async function logout(req, res) {
+  if (req.user.role === "architect") {
+    const cutoff = req.user.lastLoginAt ? new Date(req.user.lastLoginAt) : new Date(0);
+    const reportForSession = await WorkReport.exists({
+      architect: req.user._id,
+      createdAt: { $gte: cutoff },
+    });
+
+    if (!reportForSession) {
+      throw createHttpError(400, "Submit today\u2019s report before signing out.");
+    }
+
+    req.user.isOnline = false;
+    await req.user.save();
+  }
+
+  return res.json({ message: "Signed out successfully." });
+}
+
 module.exports = {
   register,
   login,
@@ -396,4 +433,5 @@ module.exports = {
   verifyOtp,
   loginWithOtp,
   getCurrentUser,
+  logout,
 };

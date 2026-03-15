@@ -11,7 +11,7 @@ const User = require("../models/User");
 const AuditLog = require("../models/AuditLog");
 
 const userSelect =
-  "fullName name username email role avatarUrl avatarSeed companyArchitectId specializationTags studioName isActive";
+  "fullName name username email role avatarUrl avatarSeed companyArchitectId specializationTags studioName isActive isOnline lastLoginAt lastReportAt";
 
 function withProjectPopulate(query) {
   return query

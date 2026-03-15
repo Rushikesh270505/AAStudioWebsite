@@ -13,6 +13,9 @@ export type UserProfile = {
   avatarUrl?: string;
   companyArchitectId?: string;
   isActive?: boolean;
+  isOnline?: boolean;
+  lastLoginAt?: string;
+  lastReportAt?: string;
   specializationTags?: string[];
 };
 
@@ -118,13 +121,35 @@ export type Invoice = {
 export type Meeting = {
   _id: string;
   title: string;
+  subject?: string;
   project?: string;
   scheduledAt: string;
   participants: UserProfile[];
   notes?: string;
+  description?: string;
   status: string;
   location?: string;
+  meetLink?: string;
   outcome?: string;
+  createdBy?: UserProfile;
+};
+
+export type WorkReport = {
+  _id: string;
+  architect: UserProfile;
+  summary: string;
+  images: Array<{
+    name: string;
+    dataUrl: string;
+  }>;
+  reportDateKey: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ArchitectReportBundle = {
+  architect: UserProfile;
+  reports: WorkReport[];
 };
 
 export type SiteVisit = {
