@@ -375,7 +375,7 @@ function ServiceCard({ service }: { service: ServiceItem }) {
     <motion.article
       whileHover={{ y: -4 }}
       transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-      className="group rounded-[32px] border p-6 md:p-7"
+      className="group rounded-[28px] border p-4 md:p-5"
       style={{
         background: "#F8F5F1",
         borderColor: "#E6E1DA",
@@ -383,7 +383,7 @@ function ServiceCard({ service }: { service: ServiceItem }) {
       }}
     >
       <div
-        className="rounded-[28px] border p-4"
+        className="rounded-[24px] border p-3"
         style={{
           background: "linear-gradient(135deg, #FAF8F4 0%, #F3EFEA 60%, #EEE8E1 100%)",
           borderColor: "#E6E1DA",
@@ -391,20 +391,20 @@ function ServiceCard({ service }: { service: ServiceItem }) {
       >
         <div className="mb-3 flex items-center justify-between gap-3">
           <span className="text-xs font-medium uppercase tracking-[0.26em] text-[#C7B8A3]">{service.index}</span>
-          <span className="rounded-full border border-[#E6E1DA] bg-white/50 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-[#5C5C5C]">
+          <span className="rounded-full border border-[#E6E1DA] bg-white/50 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-[#5C5C5C]">
             {service.note}
           </span>
         </div>
-        <div className="h-40 overflow-hidden rounded-[22px] border border-[rgba(44,44,44,0.08)] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.86),transparent_62%),linear-gradient(180deg,rgba(255,255,255,0.56),rgba(44,44,44,0.05))] p-3">
+        <div className="h-28 overflow-hidden rounded-[20px] border border-[rgba(44,44,44,0.08)] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.86),transparent_62%),linear-gradient(180deg,rgba(255,255,255,0.56),rgba(44,44,44,0.05))] p-2.5 md:h-32">
           <ServiceVisual kind={service.kind} />
         </div>
       </div>
 
-      <div className="mt-6">
-        <h3 className="display-title text-[2rem] leading-[1.02] text-[#2C2C2C] md:text-[2.35rem]">
+      <div className="mt-4">
+        <h3 className="display-title text-[1.55rem] leading-[1.04] text-[#2C2C2C] md:text-[1.8rem]">
           {service.title}
         </h3>
-        <p className="mt-4 text-sm leading-8 text-[#5C5C5C] md:text-[15px]">{service.description}</p>
+        <p className="mt-3 text-sm leading-7 text-[#5C5C5C]">{service.description}</p>
       </div>
     </motion.article>
   );
@@ -413,121 +413,31 @@ function ServiceCard({ service }: { service: ServiceItem }) {
 export function ServicesExperience() {
   return (
     <>
-      <section className="section-pad pt-8">
-        <div className="container-shell">
-          <div
-            className="grid gap-6 rounded-[42px] border p-6 md:p-8 xl:grid-cols-[0.58fr_0.42fr]"
-            style={{
-              background: "linear-gradient(135deg, #FAF8F4 0%, #F3EFEA 60%, #EEE8E1 100%)",
-              borderColor: "#E6E1DA",
-              boxShadow: "0 28px 80px rgba(44,44,44,0.08)",
-            }}
-          >
-            <div className="rounded-[34px] border border-[rgba(44,44,44,0.08)] bg-[linear-gradient(180deg,rgba(248,245,241,0.92),rgba(248,245,241,0.78))] p-7 md:p-9">
-              <span className="eyebrow">Studio services</span>
-              <h1 className="display-title mt-6 max-w-4xl text-5xl leading-[0.94] text-[#2C2C2C] md:text-7xl">
-                Premium design services shaped with calm, architectural precision.
-              </h1>
-              <p className="mt-6 max-w-2xl text-base leading-8 text-[#5C5C5C] md:text-lg">
-                Every service is framed with the same luxury visual language as the studio itself: quiet material tones,
-                precise graphics, and a presentation system built for high-end architectural practice.
-              </p>
-
-              <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-                <Link
-                  href="/contact"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[#2C2C2C] bg-[#2C2C2C] px-6 py-3 text-sm font-medium text-white shadow-[0_16px_34px_rgba(44,44,44,0.16)] transition-all hover:-translate-y-0.5 hover:border-[#3A3A3A] hover:bg-[#3A3A3A] hover:shadow-[0_20px_38px_rgba(44,44,44,0.22)] active:translate-y-[1px]"
-                >
-                  Request consultation
-                  <ArrowRight size={16} />
-                </Link>
-                <div className="rounded-full border border-[#E6E1DA] bg-[rgba(248,245,241,0.76)] px-5 py-3 text-sm text-[#5C5C5C]">
-                  70% neutral light tones, 20% charcoal text, 10% warm accent balance
-                </div>
-              </div>
-            </div>
-
-            <div className="grid gap-4">
-              {[
-                "Soft beige and ivory layering to echo presentation paper and material boards.",
-                "Warm white surfaces with light stone borders to keep cards minimal and polished.",
-                "Calm SVG architectural motion using subtle charcoal overlays rather than bright visual noise.",
-              ].map((point) => (
-                <div
-                  key={point}
-                  className="rounded-[28px] border p-5"
-                  style={{
-                    background: "#F8F5F1",
-                    borderColor: "#E6E1DA",
-                    boxShadow: "0 14px 36px rgba(44,44,44,0.05)",
-                  }}
-                >
-                  <p className="text-sm leading-8 text-[#5C5C5C]">{point}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section className="section-pad">
         <div className="container-shell">
           <div className="max-w-3xl">
             <span className="eyebrow">Service catalogue</span>
             <h2 className="display-title mt-5 text-4xl leading-tight text-[#2C2C2C] md:text-6xl">
-              A refined service matrix for architecture, interiors, landscapes, and visual delivery.
+              Premium design services for architecture, interiors, landscapes, and visual delivery.
             </h2>
             <p className="mt-5 text-base leading-8 text-[#5C5C5C] md:text-lg">
-              Each card includes a subtle animated architectural graphic, soft elevation on hover, and the same restrained material tone used throughout the studio platform.
+              Each card carries a subtle animated architectural graphic, refined neutral surfaces, and a luxury studio presentation tone without extra filler panels.
             </p>
           </div>
 
-          <div className="mt-10 grid gap-6 lg:grid-cols-2">
+          <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
             {services.map((service) => (
               <ServiceCard key={service.kind} service={service} />
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="section-pad pt-0">
-        <div className="container-shell">
-          <div
-            className="rounded-[38px] border p-7 md:p-9"
-            style={{
-              background: "linear-gradient(180deg, rgba(248,245,241,0.96), rgba(243,239,234,0.88))",
-              borderColor: "#E6E1DA",
-              boxShadow: "0 24px 56px rgba(44,44,44,0.06)",
-            }}
-          >
-            <div className="grid gap-6 md:grid-cols-[0.62fr_0.38fr] md:items-end">
-              <div>
-                <span className="eyebrow">Delivery vision</span>
-                <h2 className="display-title mt-5 text-4xl leading-[0.98] text-[#2C2C2C] md:text-5xl">
-                  The services page should feel like a premium architecture studio, not a generic portfolio grid.
-                </h2>
-                <p className="mt-5 max-w-2xl text-base leading-8 text-[#5C5C5C]">
-                  Spacious layouts, elegant typography, calm motion, and layered neutral surfaces create the luxury architectural mood while still keeping the page technically fast and responsive.
-                </p>
-              </div>
-
-              <div className="grid gap-3">
-                {[
-                  "Soft beige paper feel",
-                  "Warm white card surfaces",
-                  "Charcoal-led typography",
-                  "Measured, quiet animation",
-                ].map((item) => (
-                  <div
-                    key={item}
-                    className="rounded-[22px] border px-4 py-3 text-sm text-[#2C2C2C]"
-                    style={{ background: "#F8F5F1", borderColor: "#E6E1DA" }}
-                  >
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div className="mt-10 flex">
+            <Link
+              href="/contact"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-[#2C2C2C] bg-[#2C2C2C] px-6 py-3 text-sm font-medium text-white shadow-[0_16px_34px_rgba(44,44,44,0.16)] transition-all hover:-translate-y-0.5 hover:border-[#3A3A3A] hover:bg-[#3A3A3A] hover:shadow-[0_20px_38px_rgba(44,44,44,0.22)] active:translate-y-[1px]"
+            >
+              Request consultation
+              <ArrowRight size={16} />
+            </Link>
           </div>
         </div>
       </section>
