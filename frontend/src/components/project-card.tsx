@@ -47,7 +47,7 @@ export function ProjectCard({ project }: { project: Project }) {
           </div>
           <Link
             href={`/projects/${project.slug}`}
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-[#c8a97e]/42 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(200,169,126,0.18))] px-4 py-2 text-sm font-medium text-[#111111] shadow-[0_14px_34px_rgba(200,169,126,0.16)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-[#c8a97e]/62 hover:bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(200,169,126,0.24))] hover:shadow-[0_18px_40px_rgba(200,169,126,0.22)]"
+            className="premium-button px-4 py-2 text-sm font-medium"
           >
             Open project
             <ArrowUpRight size={16} />

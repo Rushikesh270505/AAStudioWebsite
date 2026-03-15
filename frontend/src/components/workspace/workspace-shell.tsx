@@ -59,9 +59,9 @@ export function WorkspaceShell({
   }
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f7f4ee_0%,#f3f0ea_45%,#f8f6f2_100%)]">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#f2ece4_0%,#eae3da_42%,#f4eee7_100%)]">
       <div className="grid min-h-screen lg:grid-cols-[280px_1fr]">
-        <aside className="border-r border-black/6 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.86),transparent_55%),linear-gradient(180deg,rgba(255,255,255,0.78),rgba(248,243,236,0.92))] p-5 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
+        <aside className="border-r border-black/8 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.88),transparent_52%),linear-gradient(180deg,rgba(255,255,255,0.74),rgba(236,228,217,0.92))] p-5 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
           <Link href={getWorkspacePath(user.role)} className="glass-panel flex items-center gap-4 rounded-[28px] p-4">
             <img
               src={user.avatarUrl}
@@ -91,10 +91,8 @@ export function WorkspaceShell({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "rounded-[22px] px-4 py-3 text-sm transition-all",
-                    active
-                      ? "bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(200,169,126,0.18))] text-[#111111] shadow-[0_12px_30px_rgba(200,169,126,0.14)]"
-                      : "text-[#5d5d5d] hover:bg-white/65 hover:text-[#111111]",
+                    "glass-tab justify-start rounded-[22px] px-4 py-3 text-sm",
+                    active ? "glass-tab-active" : "",
                   )}
                 >
                   {item.label}
@@ -124,11 +122,11 @@ export function WorkspaceShell({
             </div>
             <div className="flex flex-col gap-3 md:items-end">
               <div className="flex items-center gap-3">
-                <div className="inline-flex items-center gap-2 rounded-full border border-black/8 bg-white/75 px-4 py-2 text-sm text-[#5d5d5d]">
+                <div className="glass-tab px-4 py-2 text-sm text-[#5d5d5d]">
                   <Search size={16} />
                   Search
                 </div>
-                <div className="relative inline-flex items-center gap-2 rounded-full border border-black/8 bg-white/75 px-4 py-2 text-sm text-[#111111]">
+                <div className="glass-tab relative px-4 py-2 text-sm text-[#111111]">
                   <Bell size={16} />
                   {notifications.filter((item) => !item.read).length}
                 </div>

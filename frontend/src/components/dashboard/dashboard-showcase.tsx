@@ -61,7 +61,7 @@ export function DashboardShowcase() {
                 {demoMetrics.map((metric) => (
                   <div
                     key={metric.label}
-                    className="rounded-[24px] border border-white/16 bg-white/10 px-4 py-4 backdrop-blur-md"
+                    className="rounded-[24px] border border-white/18 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.22),transparent_60%),linear-gradient(180deg,rgba(255,255,255,0.14),rgba(17,17,17,0.16))] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_12px_26px_rgba(0,0,0,0.14)] backdrop-blur-xl"
                   >
                     <p className="text-xs uppercase tracking-[0.22em] text-white/70">{metric.label}</p>
                     <p className="mt-3 text-3xl font-medium">{metric.value}</p>
@@ -79,7 +79,7 @@ export function DashboardShowcase() {
                 {demoUpdates.map((item) => (
                   <div
                     key={item.title}
-                    className="rounded-[24px] border border-black/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(249,243,235,0.86))] p-4"
+                    className="glass-panel rounded-[24px] p-4"
                   >
                     <p className="font-medium text-[#111111]">{item.title}</p>
                     <p className="mt-2 text-sm text-[#6b6b6b]">{item.meta}</p>
@@ -120,7 +120,7 @@ export function DashboardShowcase() {
               {demoProjects.map((project, index) => (
                 <div
                   key={project.slug}
-                  className="grid gap-4 rounded-[28px] border border-black/8 bg-white/72 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.82)] md:grid-cols-[120px_1fr_auto]"
+                  className="glass-panel grid gap-4 rounded-[28px] p-4 md:grid-cols-[120px_1fr_auto]"
                 >
                   <div
                     className="h-24 rounded-[22px] bg-cover bg-center"
@@ -131,7 +131,7 @@ export function DashboardShowcase() {
                     <p className="mt-1 text-sm text-[#6b6b6b]">{project.location}</p>
                     <p className="mt-3 text-sm leading-6 text-[#4c4c4c]">{project.summary}</p>
                   </div>
-                  <div className="min-w-[110px] rounded-[22px] border border-[#c8a97e]/18 bg-[#fbf7f1] px-4 py-3 text-right">
+                  <div className="glass-panel min-w-[110px] rounded-[22px] px-4 py-3 text-right">
                     <p className="text-xs uppercase tracking-[0.22em] text-[#8f6532]">Stage</p>
                     <p className="mt-3 text-sm font-medium text-[#111111]">
                       {index === 0 ? "Completed" : index === 1 ? "Review" : "Concept"}
@@ -152,7 +152,7 @@ export function DashboardShowcase() {
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className="rounded-[24px] border border-black/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(249,243,235,0.86))] p-4"
+                    className="glass-panel rounded-[24px] p-4"
                   >
                     <p className="font-medium text-[#111111]">{item.label}</p>
                     <p className="mt-3 text-2xl font-medium text-[#111111]">{item.amount}</p>
@@ -170,7 +170,7 @@ export function DashboardShowcase() {
                   "Meeting schedule and site visit timeline in one place",
                   "Empty states stay clean when a client has no active work yet",
                 ].map((item) => (
-                  <div key={item} className="rounded-[24px] border border-black/8 bg-white/72 px-4 py-4 text-sm text-[#333333]">
+                  <div key={item} className="glass-panel rounded-[24px] px-4 py-4 text-sm text-[#333333]">
                     {item}
                   </div>
                 ))}
