@@ -27,6 +27,13 @@ function getUserKey(user: UserProfile) {
   return user._id || user.id;
 }
 
+type PendingAction =
+  | {
+      userId: string;
+      kind: "archive" | "terminate";
+    }
+  | null;
+
 function StaffManagementContent({ token }: { token: string }) {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [architectForm, setArchitectForm] = useState<ArchitectFormState>(emptyForm);
@@ -36,6 +43,7 @@ function StaffManagementContent({ token }: { token: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [archivingId, setArchivingId] = useState("");
   const [terminatingId, setTerminatingId] = useState("");
+  const [pendingAction, setPendingAction] = useState<PendingAction>(null);
 
   async function loadUsers() {
     try {
@@ -95,21 +103,13 @@ function StaffManagementContent({ token }: { token: string }) {
   }
 
   async function handleArchiveArchitect(architect: UserProfile) {
-    const label = architect.username || architect.fullName || architect.email;
-    const confirmed = window.confirm(
-      `Archive ${label}? This removes portal access and architect ID, but keeps email and phone in the archive for future contact.`,
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
     setArchivingId(getUserKey(architect));
     setMessage("");
 
     try {
       const response = await archiveArchitectAccount(token, getUserKey(architect));
       setMessage(response.message);
+      setPendingAction(null);
       await loadUsers();
     } catch (archiveError) {
       setMessage(archiveError instanceof Error ? archiveError.message : "Unable to archive architect access.");
@@ -119,21 +119,13 @@ function StaffManagementContent({ token }: { token: string }) {
   }
 
   async function handleTerminateArchitect(architect: UserProfile) {
-    const label = architect.username || architect.fullName || architect.email;
-    const confirmed = window.confirm(
-      `Terminate ${label} permanently? This deletes the architect credentials and architect-owned data. This cannot be undone.`,
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
     setTerminatingId(getUserKey(architect));
     setMessage("");
 
     try {
       const response = await terminateArchitectAccount(token, getUserKey(architect));
       setMessage(response.message);
+      setPendingAction(null);
       await loadUsers();
     } catch (terminateError) {
       setMessage(terminateError instanceof Error ? terminateError.message : "Unable to terminate architect.");
@@ -237,24 +229,74 @@ function StaffManagementContent({ token }: { token: string }) {
                       <span className="rounded-full border border-black/8 bg-white/80 px-4 py-2 text-xs uppercase tracking-[0.22em] text-[#8f6532]">
                         Architect
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => handleArchiveArchitect(staffMember)}
-                        disabled={archivingId === getUserKey(staffMember) || terminatingId === getUserKey(staffMember)}
-                        className="rounded-full border border-[#d5b48a]/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(244,229,208,0.88))] px-4 py-2 text-sm font-medium text-[#7d5330] transition hover:shadow-[0_12px_24px_rgba(200,169,126,0.16)] disabled:opacity-60"
-                      >
-                        {archivingId === getUserKey(staffMember) ? "Archiving..." : "Archive"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleTerminateArchitect(staffMember)}
-                        disabled={archivingId === getUserKey(staffMember) || terminatingId === getUserKey(staffMember)}
-                        className="rounded-full border border-[#d28d82]/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(246,222,216,0.88))] px-4 py-2 text-sm font-medium text-[#8f3f32] transition hover:shadow-[0_12px_24px_rgba(210,141,130,0.16)] disabled:opacity-60"
-                      >
-                        {terminatingId === getUserKey(staffMember) ? "Terminating..." : "Terminate"}
-                      </button>
+                      {pendingAction?.userId === getUserKey(staffMember) ? (
+                        <div className="flex flex-wrap items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              pendingAction.kind === "archive"
+                                ? void handleArchiveArchitect(staffMember)
+                                : void handleTerminateArchitect(staffMember)
+                            }
+                            disabled={archivingId === getUserKey(staffMember) || terminatingId === getUserKey(staffMember)}
+                            className={
+                              pendingAction.kind === "archive"
+                                ? "rounded-full border border-[#d5b48a]/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(244,229,208,0.88))] px-4 py-2 text-sm font-medium text-[#7d5330] transition hover:shadow-[0_12px_24px_rgba(200,169,126,0.16)] disabled:opacity-60"
+                                : "rounded-full border border-[#d28d82]/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(246,222,216,0.88))] px-4 py-2 text-sm font-medium text-[#8f3f32] transition hover:shadow-[0_12px_24px_rgba(210,141,130,0.16)] disabled:opacity-60"
+                            }
+                          >
+                            {pendingAction.kind === "archive"
+                              ? archivingId === getUserKey(staffMember)
+                                ? "Archiving..."
+                                : "Confirm archive"
+                              : terminatingId === getUserKey(staffMember)
+                                ? "Terminating..."
+                                : "Confirm terminate"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPendingAction(null)}
+                            disabled={archivingId === getUserKey(staffMember) || terminatingId === getUserKey(staffMember)}
+                            className="rounded-full border border-black/10 bg-white/85 px-4 py-2 text-sm font-medium text-[#5d5d5d] transition hover:bg-white disabled:opacity-60"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMessage("");
+                              setPendingAction({ userId: getUserKey(staffMember), kind: "archive" });
+                            }}
+                            disabled={archivingId === getUserKey(staffMember) || terminatingId === getUserKey(staffMember)}
+                            className="rounded-full border border-[#d5b48a]/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(244,229,208,0.88))] px-4 py-2 text-sm font-medium text-[#7d5330] transition hover:shadow-[0_12px_24px_rgba(200,169,126,0.16)] disabled:opacity-60"
+                          >
+                            Archive
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMessage("");
+                              setPendingAction({ userId: getUserKey(staffMember), kind: "terminate" });
+                            }}
+                            disabled={archivingId === getUserKey(staffMember) || terminatingId === getUserKey(staffMember)}
+                            className="rounded-full border border-[#d28d82]/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(246,222,216,0.88))] px-4 py-2 text-sm font-medium text-[#8f3f32] transition hover:shadow-[0_12px_24px_rgba(210,141,130,0.16)] disabled:opacity-60"
+                          >
+                            Terminate
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
+                  {pendingAction?.userId === getUserKey(staffMember) ? (
+                    <div className="mt-4 rounded-[18px] border border-black/8 bg-white/78 px-4 py-3 text-sm leading-7 text-[#5d5d5d]">
+                      {pendingAction.kind === "archive"
+                        ? "Archive removes portal access and clears the architect ID, while preserving email and phone in the archive list."
+                        : "Terminate permanently deletes this architect account and architect-owned data. This cannot be undone."}
+                    </div>
+                  ) : null}
                 </div>
               ))
             ) : (
