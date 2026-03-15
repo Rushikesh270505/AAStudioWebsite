@@ -61,7 +61,7 @@ export function ContactForm() {
           <input
             name="phone"
             className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
-            placeholder="+91 98765 43210"
+            placeholder="+91 93903 89909"
           />
         </label>
         <label className="grid gap-2 text-sm text-[#3c3c3c]">

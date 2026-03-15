@@ -20,7 +20,7 @@ export function SiteFooter() {
               </span>
               <span className="pill">
                 <Phone size={16} className="text-[#8f6532]" />
-                +91 98765 43210
+                +91 93903 89909
               </span>
             </div>
           </div>
@@ -39,12 +39,12 @@ export function SiteFooter() {
           <div>
             <p className="mb-4 text-sm uppercase tracking-[0.28em] text-[#8f6532]">Contact</p>
             <div className="grid gap-3 text-sm text-[#3a3a3a]">
-              <a href="mailto:studio@aa-studios.com" className="inline-flex items-center gap-2">
+              <a href="mailto:architectakhilstudios@gmail.com" className="inline-flex items-center gap-2">
                 <Mail size={16} />
-                studio@aa-studios.com
+                architectakhilstudios@gmail.com
               </a>
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/akhilkatari__?igsh=M3N5MWhlczNheW9u"
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-2"
