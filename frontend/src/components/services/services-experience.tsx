@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
 
 type ServiceKind =
   | "planning"
@@ -106,6 +104,17 @@ function ServiceVisual({ kind }: { kind: ServiceKind }) {
     case "planning":
       return (
         <svg viewBox="0 0 240 180" className="h-full w-full" fill="none">
+          {[52, 76, 100, 124].map((y, index) => (
+            <motion.path
+              key={`planning-grid-${y}`}
+              d={`M30 ${y}H170`}
+              stroke="rgba(44,44,44,0.08)"
+              strokeWidth="1"
+              initial={{ opacity: 0.06 }}
+              animate={{ opacity: [0.06, 0.18, 0.06] }}
+              transition={{ duration: 2.8, delay: index * 0.18, repeat: Number.POSITIVE_INFINITY }}
+            />
+          ))}
           <motion.path
             d="M38 40H136V114H38Z"
             stroke={stroke}
@@ -124,6 +133,18 @@ function ServiceVisual({ kind }: { kind: ServiceKind }) {
             animate={{ opacity: 0.75 }}
             transition={fadeTransition}
           />
+          {[52, 70, 88, 106].map((x, index) => (
+            <motion.path
+              key={`planning-mark-${x}`}
+              d={`M${x} 120V128M${x} 40V48`}
+              stroke={accent}
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              initial={{ opacity: 0.2 }}
+              animate={{ opacity: [0.2, 0.8, 0.2] }}
+              transition={{ duration: 2.2, delay: index * 0.12, repeat: Number.POSITIVE_INFINITY }}
+            />
+          ))}
           <motion.path
             d="M38 128H154M154 128L144 122M154 128L144 134"
             stroke={accent}
@@ -149,11 +170,29 @@ function ServiceVisual({ kind }: { kind: ServiceKind }) {
             <circle cx="164" cy="58" r="20" stroke={overlay} />
             <path d="M164 42V74M148 58H180" stroke={overlay} strokeWidth="1.2" />
           </motion.g>
+          <motion.circle
+            cx="104"
+            cy="76"
+            r="4"
+            fill={accent}
+            animate={{ scale: [0.8, 1.15, 0.8], opacity: [0.25, 0.8, 0.25] }}
+            transition={{ duration: 2.6, repeat: Number.POSITIVE_INFINITY }}
+          />
         </svg>
       );
     case "elevation":
       return (
         <svg viewBox="0 0 240 180" className="h-full w-full" fill="none">
+          {[62, 84, 106].map((y, index) => (
+            <motion.path
+              key={`elevation-floor-${y}`}
+              d={`M44 ${y}H192`}
+              stroke="rgba(44,44,44,0.08)"
+              strokeWidth="1"
+              animate={{ opacity: [0.08, 0.22, 0.08] }}
+              transition={{ duration: 2.6, delay: index * 0.2, repeat: Number.POSITIVE_INFINITY }}
+            />
+          ))}
           <motion.path
             d="M48 124V64L86 44L122 64V124M152 124V52L188 32L188 124"
             stroke={stroke}
@@ -175,7 +214,19 @@ function ServiceVisual({ kind }: { kind: ServiceKind }) {
               strokeWidth="1.4"
               initial={{ opacity: 0.15, y: 84 }}
               animate={{ opacity: 0.85, y: 76 }}
-              transition={{ duration: 1.4, delay: index * 0.18, repeat: Number.POSITIVE_INFINITY, repeatType: "mirror" }}
+            transition={{ duration: 1.4, delay: index * 0.18, repeat: Number.POSITIVE_INFINITY, repeatType: "mirror" }}
+          />
+          ))}
+          {[158, 170, 182].map((x, index) => (
+            <motion.path
+              key={`elevation-reveal-${x}`}
+              d={`M${x} 50V122`}
+              stroke={accent}
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              initial={{ pathLength: 0, opacity: 0.2 }}
+              animate={{ pathLength: 1, opacity: 0.85 }}
+              transition={{ duration: 1.8, delay: index * 0.16, repeat: Number.POSITIVE_INFINITY, repeatType: "mirror" }}
             />
           ))}
           <motion.path
@@ -184,6 +235,13 @@ function ServiceVisual({ kind }: { kind: ServiceKind }) {
             strokeWidth="1.4"
             animate={{ opacity: [0.35, 0.75, 0.35] }}
             transition={fadeTransition}
+          />
+          <motion.path
+            d="M132 40L144 34L156 40"
+            stroke={overlay}
+            strokeWidth="1.2"
+            animate={{ opacity: [0.18, 0.5, 0.18], y: [-2, 0, -2] }}
+            transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY }}
           />
         </svg>
       );
@@ -211,6 +269,16 @@ function ServiceVisual({ kind }: { kind: ServiceKind }) {
             animate={{ opacity: [0.12, 0.3, 0.12], scale: [0.92, 1.03, 0.92] }}
             transition={{ duration: 3.2, repeat: Number.POSITIVE_INFINITY }}
           />
+          <motion.rect
+            x="78"
+            y="108"
+            width="84"
+            height="16"
+            rx="8"
+            fill="rgba(44,44,44,0.08)"
+            animate={{ opacity: [0.24, 0.45, 0.24] }}
+            transition={{ duration: 2.8, repeat: Number.POSITIVE_INFINITY }}
+          />
           <motion.path
             d="M56 118H92C98 118 102 122 104 128L108 142M132 142L136 128C138 122 142 118 148 118H184"
             stroke={stroke}
@@ -223,6 +291,22 @@ function ServiceVisual({ kind }: { kind: ServiceKind }) {
             strokeWidth="1.5"
             animate={{ opacity: [0.3, 0.7, 0.3] }}
             transition={fadeTransition}
+          />
+          <motion.path
+            d="M92 104H108M132 104H148"
+            stroke={accent}
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            animate={{ opacity: [0.24, 0.85, 0.24] }}
+            transition={{ duration: 2.4, repeat: Number.POSITIVE_INFINITY }}
+          />
+          <motion.circle
+            cx="120"
+            cy="52"
+            r="5"
+            fill="rgba(199,184,163,0.28)"
+            animate={{ opacity: [0.28, 0.8, 0.28] }}
+            transition={{ duration: 1.8, repeat: Number.POSITIVE_INFINITY }}
           />
         </svg>
       );
@@ -246,8 +330,32 @@ function ServiceVisual({ kind }: { kind: ServiceKind }) {
               strokeWidth="1.8"
               strokeLinecap="round"
               animate={{ rotate: [-4, 4, -4] }}
-              transition={{ duration: 2.4, delay: index * 0.12, repeat: Number.POSITIVE_INFINITY }}
-              style={{ transformOrigin: `${x}px 132px` }}
+            transition={{ duration: 2.4, delay: index * 0.12, repeat: Number.POSITIVE_INFINITY }}
+            style={{ transformOrigin: `${x}px 132px` }}
+          />
+          ))}
+          {[88, 118, 148, 176].map((x, index) => (
+            <motion.circle
+              key={`land-leaf-${x}`}
+              cx={x}
+              cy="88"
+              r="3.2"
+              fill="rgba(199,184,163,0.3)"
+              animate={{ y: [0, -8, 0], opacity: [0.15, 0.65, 0.15] }}
+              transition={{ duration: 2.6, delay: index * 0.22, repeat: Number.POSITIVE_INFINITY }}
+            />
+          ))}
+          {[62, 86, 114, 142].map((x, index) => (
+            <motion.rect
+              key={`land-stone-${x}`}
+              x={x}
+              y="122"
+              width="12"
+              height="5"
+              rx="2.5"
+              fill="rgba(44,44,44,0.12)"
+              animate={{ opacity: [0.15, 0.42, 0.15] }}
+              transition={{ duration: 2.4, delay: index * 0.16, repeat: Number.POSITIVE_INFINITY }}
             />
           ))}
           <motion.path
@@ -288,6 +396,24 @@ function ServiceVisual({ kind }: { kind: ServiceKind }) {
             animate={{ scale: [0.92, 1.08, 0.92], opacity: [0.3, 0.75, 0.3] }}
             transition={{ duration: 2.8, repeat: Number.POSITIVE_INFINITY }}
           />
+          {[90, 120, 150].map((x, index) => (
+            <motion.path
+              key={`deco-petal-${x}`}
+              d={`M${x} 72C${x - 6} 82 ${x - 6} 94 ${x} 102C${x + 6} 94 ${x + 6} 82 ${x} 72Z`}
+              stroke={overlay}
+              strokeWidth="1.1"
+              animate={{ opacity: [0.18, 0.58, 0.18], y: [-2, 2, -2] }}
+              transition={{ duration: 2.8, delay: index * 0.18, repeat: Number.POSITIVE_INFINITY }}
+            />
+          ))}
+          <motion.path
+            d="M84 138H156"
+            stroke={accent}
+            strokeWidth="1.2"
+            strokeDasharray="3 5"
+            animate={{ pathLength: [0.2, 1, 0.2], opacity: [0.2, 0.7, 0.2] }}
+            transition={{ duration: 3.2, repeat: Number.POSITIVE_INFINITY }}
+          />
         </svg>
       );
     case "modeling":
@@ -301,6 +427,25 @@ function ServiceVisual({ kind }: { kind: ServiceKind }) {
             <path d="M120 44L162 66V112L120 136L78 112V66L120 44Z" stroke={stroke} strokeWidth="2" />
             <path d="M120 44V90L162 112M120 90L78 112M120 90L162 66M120 90L78 66" stroke={accent} strokeWidth="1.6" />
           </motion.g>
+          {[72, 120, 168].map((x, index) => (
+            <motion.circle
+              key={`model-node-${x}`}
+              cx={x}
+              cy="90"
+              r="3"
+              fill="rgba(199,184,163,0.32)"
+              animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.2, 0.82, 0.2] }}
+              transition={{ duration: 2.4, delay: index * 0.2, repeat: Number.POSITIVE_INFINITY }}
+            />
+          ))}
+          <motion.path
+            d="M120 24V38M184 90H198M120 142V156M42 90H56"
+            stroke={softStroke}
+            strokeWidth="1.4"
+            strokeLinecap="round"
+            animate={{ opacity: [0.2, 0.65, 0.2] }}
+            transition={{ duration: 2.8, repeat: Number.POSITIVE_INFINITY }}
+          />
         </svg>
       );
     case "walkthrough":
@@ -322,6 +467,16 @@ function ServiceVisual({ kind }: { kind: ServiceKind }) {
             animate={{ opacity: [0.25, 0.72, 0.25] }}
             transition={fadeTransition}
           />
+          {[84, 110, 136].map((x, index) => (
+            <motion.path
+              key={`walk-perspective-${x}`}
+              d={`M120 90L${x} 126`}
+              stroke="rgba(44,44,44,0.12)"
+              strokeWidth="1"
+              animate={{ opacity: [0.08, 0.4, 0.08] }}
+              transition={{ duration: 2.2, delay: index * 0.18, repeat: Number.POSITIVE_INFINITY }}
+            />
+          ))}
           <motion.path
             d="M74 56L96 56M74 56L74 76M166 56L144 56M166 56L166 76M74 124L96 124M74 124L74 104M166 124L144 124M166 124L166 104"
             stroke={accent}
@@ -329,6 +484,16 @@ function ServiceVisual({ kind }: { kind: ServiceKind }) {
             strokeLinecap="round"
             animate={{ x: [-4, 4, -4] }}
             transition={{ duration: 3.4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+          />
+          <motion.rect
+            x="102"
+            y="76"
+            width="36"
+            height="24"
+            rx="6"
+            fill="rgba(199,184,163,0.12)"
+            animate={{ opacity: [0.08, 0.28, 0.08], scale: [0.96, 1.02, 0.96] }}
+            transition={{ duration: 2.8, repeat: Number.POSITIVE_INFINITY }}
           />
         </svg>
       );
@@ -357,6 +522,16 @@ function ServiceVisual({ kind }: { kind: ServiceKind }) {
             animate={{ x: [102, 106, 102], y: [72, 68, 72] }}
             transition={{ duration: 3.6, repeat: Number.POSITIVE_INFINITY }}
           />
+          {[78, 92, 106].map((y, index) => (
+            <motion.path
+              key={`media-lines-${y}`}
+              d={`M116 ${y}H162`}
+              stroke={overlay}
+              strokeWidth="1.1"
+              animate={{ opacity: [0.18, 0.56, 0.18] }}
+              transition={{ duration: 2.1, delay: index * 0.16, repeat: Number.POSITIVE_INFINITY }}
+            />
+          ))}
           <motion.path
             d="M74 56H92M74 56V74M164 84H146M164 84V102M114 126H132M114 126V108"
             stroke={softStroke}
@@ -364,6 +539,14 @@ function ServiceVisual({ kind }: { kind: ServiceKind }) {
             strokeLinecap="round"
             animate={{ opacity: [0.28, 0.76, 0.28] }}
             transition={fadeTransition}
+          />
+          <motion.path
+            d="M62 138L176 138"
+            stroke={accent}
+            strokeWidth="1.4"
+            strokeDasharray="5 4"
+            animate={{ pathLength: [0.15, 1, 0.15], opacity: [0.18, 0.74, 0.18] }}
+            transition={{ duration: 3.4, repeat: Number.POSITIVE_INFINITY }}
           />
         </svg>
       );
@@ -420,24 +603,12 @@ export function ServicesExperience() {
             <h2 className="display-title mt-5 text-4xl leading-tight text-[#2C2C2C] md:text-6xl">
               Premium design services for architecture, interiors, landscapes, and visual delivery.
             </h2>
-            <p className="mt-5 text-base leading-8 text-[#5C5C5C] md:text-lg">
-              Each card carries a subtle animated architectural graphic, refined neutral surfaces, and a luxury studio presentation tone without extra filler panels.
-            </p>
           </div>
 
           <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
             {services.map((service) => (
               <ServiceCard key={service.kind} service={service} />
             ))}
-          </div>
-          <div className="mt-10 flex">
-            <Link
-              href="/contact"
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-[#2C2C2C] bg-[#2C2C2C] px-6 py-3 text-sm font-medium text-white shadow-[0_16px_34px_rgba(44,44,44,0.16)] transition-all hover:-translate-y-0.5 hover:border-[#3A3A3A] hover:bg-[#3A3A3A] hover:shadow-[0_20px_38px_rgba(44,44,44,0.22)] active:translate-y-[1px]"
-            >
-              Request consultation
-              <ArrowRight size={16} />
-            </Link>
           </div>
         </div>
       </section>
