@@ -269,13 +269,20 @@ export function createArchitectAccount(
     phone?: string;
     specializationTags?: string[];
     companyArchitectId?: string;
-    password?: string;
+    password: string;
   },
 ) {
-  return request<{ user: UserProfile; temporaryPassword: string }>("/users/architects", {
+  return request<{ user: UserProfile; temporaryPassword?: string }>("/users/architects", {
     method: "POST",
     headers: authHeaders(token),
     body: JSON.stringify(payload),
+  });
+}
+
+export function removeArchitectAccount(token: string, userId: string) {
+  return request<{ message: string; user: UserProfile }>(`/users/architects/${userId}`, {
+    method: "DELETE",
+    headers: authHeaders(token),
   });
 }
 

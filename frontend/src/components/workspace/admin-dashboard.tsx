@@ -1,34 +1,24 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import { createArchitectAccount, fetchAdminDashboard, fetchContactLeads } from "@/lib/api";
+import { useEffect, useState } from "react";
+import { AdminShell } from "@/components/workspace/admin-shell";
 import { MetricCard } from "@/components/workspace/metric-card";
 import { ProjectListCard } from "@/components/workspace/project-list-card";
-import { ProtectedArea } from "@/components/workspace/protected-area";
-import { WorkspaceShell } from "@/components/workspace/workspace-shell";
-import type { AdminDashboardPayload, ContactLead, UserProfile } from "@/lib/platform-types";
+import { fetchAdminDashboard } from "@/lib/api";
+import type { AdminDashboardPayload } from "@/lib/platform-types";
 
-function AdminDashboardContent({ token, user }: { token: string; user: UserProfile }) {
+function AdminDashboardContent({ token }: { token: string }) {
   const [payload, setPayload] = useState<AdminDashboardPayload | null>(null);
-  const [leads, setLeads] = useState<ContactLead[]>([]);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("Create staff accounts, review incoming work, and keep the studio board organized.");
-  const [architectForm, setArchitectForm] = useState({
-    username: "",
-    email: "",
-    phone: "",
-    companyArchitectId: "",
-  });
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadDashboard() {
       try {
-        const [adminPayload, contactLeads] = await Promise.all([fetchAdminDashboard(token), fetchContactLeads(token)]);
+        const adminPayload = await fetchAdminDashboard(token);
         if (!cancelled) {
           setPayload(adminPayload);
-          setLeads(contactLeads);
           setError("");
         }
       } catch (loadError) {
@@ -45,206 +35,120 @@ function AdminDashboardContent({ token, user }: { token: string; user: UserProfi
     };
   }, [token]);
 
-  async function handleCreateArchitect(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    try {
-      const response = await createArchitectAccount(token, architectForm);
-      setMessage(
-        `Architect account created for ${response.user.username || response.user.fullName}. Temporary password: ${response.temporaryPassword}`,
-      );
-      setArchitectForm({
-        username: "",
-        email: "",
-        phone: "",
-        companyArchitectId: "",
-      });
-
-      const adminPayload = await fetchAdminDashboard(token);
-      setPayload(adminPayload);
-    } catch (createError) {
-      setMessage(createError instanceof Error ? createError.message : "Unable to create the architect account.");
-    }
+  if (!payload) {
+    return (
+      <div className="grid gap-4 md:grid-cols-4">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <div key={index} className="glass-panel h-32 animate-pulse rounded-[28px]" />
+        ))}
+      </div>
+    );
   }
 
   return (
-    <WorkspaceShell
-      user={user}
-      title="Admin control center"
-      description="Monitor the full pipeline, manage architect staffing, review new inquiries, and keep approvals moving from one polished workspace."
-      navItems={[{ href: "/admin/dashboard", label: "Dashboard" }]}
-      notifications={payload?.notifications || []}
-    >
+    <div className="grid gap-6">
       {error ? <div className="glass-panel rounded-[28px] p-6 text-sm text-[#8f6532]">{error}</div> : null}
 
-      {!payload ? (
-        <div className="grid gap-4 md:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <div key={index} className="glass-panel h-32 animate-pulse rounded-[28px]" />
-          ))}
-        </div>
-      ) : (
-        <div className="grid gap-6">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <MetricCard label="Total projects" value={payload.totals.totalProjects} />
-            <MetricCard label="Pending works" value={payload.totals.pendingWorks} />
-            <MetricCard label="In progress" value={payload.totals.worksInProgress} />
-            <MetricCard label="Review queue" value={payload.totals.reviewQueue} />
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <MetricCard label="Total projects" value={payload.totals.totalProjects} hint="All published and internal works." />
+        <MetricCard label="Pending works" value={payload.totals.pendingWorks} hint="Projects waiting for assignment." />
+        <MetricCard label="In progress" value={payload.totals.worksInProgress} hint="Active studio delivery load." />
+        <MetricCard label="Review queue" value={payload.totals.reviewQueue} hint="Ready for admin review." />
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,0.62fr)_minmax(0,0.38fr)]">
+        <section className="grid gap-4">
+          <div className="glass-panel rounded-[30px] p-6">
+            <p className="eyebrow">Review queue</p>
+            <h2 className="display-title mt-4 text-3xl">Projects waiting for approval</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-[#5d5d5d]">
+              Keep this board focused on approvals and escalations. Staff operations, workload, inquiries, and publishing now
+              sit in their own dedicated sections.
+            </p>
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-[0.56fr_0.44fr]">
-            <div className="grid gap-4">
-              <h2 className="display-title text-3xl">Review queue</h2>
-              {payload.reviewQueue.length ? (
-                payload.reviewQueue.map((project) => (
-                  <ProjectListCard key={project._id} project={project} href={`/projects/${project.slug}`} />
+          {payload.reviewQueue.length ? (
+            payload.reviewQueue.map((project) => (
+              <ProjectListCard key={project._id} project={project} href={`/projects/${project.slug}`} />
+            ))
+          ) : (
+            <div className="glass-panel rounded-[30px] p-6 text-sm leading-7 text-[#5d5d5d]">
+              No projects are waiting for review right now.
+            </div>
+          )}
+        </section>
+
+        <div className="grid gap-6">
+          <section className="glass-panel rounded-[30px] p-6">
+            <p className="eyebrow">Studio pulse</p>
+            <div className="mt-5 grid gap-3">
+              <div className="rounded-[24px] border border-black/8 bg-white/72 p-4">
+                <p className="text-xs uppercase tracking-[0.22em] text-[#8f6532]">Completed</p>
+                <p className="display-title mt-2 text-3xl">{payload.totals.completed}</p>
+              </div>
+              <div className="rounded-[24px] border border-black/8 bg-white/72 p-4">
+                <p className="text-xs uppercase tracking-[0.22em] text-[#8f6532]">Architects</p>
+                <p className="display-title mt-2 text-3xl">{payload.totals.architects}</p>
+              </div>
+              <div className="rounded-[24px] border border-black/8 bg-white/72 p-4">
+                <p className="text-xs uppercase tracking-[0.22em] text-[#8f6532]">Total users</p>
+                <p className="display-title mt-2 text-3xl">{payload.totals.users}</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="glass-panel rounded-[30px] p-6">
+            <p className="eyebrow">Recent activity</p>
+            <div className="mt-5 grid gap-3">
+              {payload.recentActivity.length ? (
+                payload.recentActivity.slice(0, 6).map((entry) => (
+                  <div key={entry._id} className="rounded-[22px] border border-black/8 bg-white/70 p-4">
+                    <p className="text-sm font-medium capitalize text-[#111111]">{entry.action.replace(/_/g, " ").toLowerCase()}</p>
+                    <p className="mt-2 text-xs uppercase tracking-[0.18em] text-[#8f6532]">
+                      {(entry.actor?.username || entry.actor?.fullName || "System").toUpperCase()}
+                    </p>
+                    <p className="mt-2 text-sm text-[#5d5d5d]">{new Date(entry.createdAt).toLocaleString()}</p>
+                  </div>
                 ))
               ) : (
-                <div className="glass-panel rounded-[28px] p-6 text-sm text-[#5d5d5d]">
-                  No projects are waiting for review right now.
-                </div>
+                <p className="text-sm text-[#5d5d5d]">No audit activity is recorded yet.</p>
               )}
             </div>
+          </section>
 
-            <div className="glass-panel rounded-[28px] border border-white/50 p-6 shadow-[0_20px_50px_rgba(17,17,17,0.05)]">
-              <p className="eyebrow">Create staff account</p>
-              <form onSubmit={handleCreateArchitect} className="mt-5 grid gap-3">
-                <input
-                  required
-                  value={architectForm.username}
-                  onChange={(event) => setArchitectForm((current) => ({ ...current, username: event.target.value }))}
-                  placeholder="Username"
-                  className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none focus:border-[#c8a97e]"
-                />
-                <input
-                  required
-                  type="email"
-                  value={architectForm.email}
-                  onChange={(event) => setArchitectForm((current) => ({ ...current, email: event.target.value }))}
-                  placeholder="Email"
-                  className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none focus:border-[#c8a97e]"
-                />
-                <input
-                  value={architectForm.phone}
-                  onChange={(event) => setArchitectForm((current) => ({ ...current, phone: event.target.value }))}
-                  placeholder="Phone"
-                  className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none focus:border-[#c8a97e]"
-                />
-                <input
-                  value={architectForm.companyArchitectId}
-                  onChange={(event) => setArchitectForm((current) => ({ ...current, companyArchitectId: event.target.value }))}
-                  placeholder="Architect ID"
-                  className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none focus:border-[#c8a97e]"
-                />
-                <button type="submit" className="premium-button px-4 py-3 text-sm font-medium">
-                  Create account
-                </button>
-              </form>
-              <p className="mt-4 text-sm leading-7 text-[#5d5d5d]">{message}</p>
-            </div>
-          </div>
-
-          <div className="grid gap-6 xl:grid-cols-[0.5fr_0.5fr]">
-            <div className="glass-panel rounded-[28px] border border-white/50 p-6 shadow-[0_20px_50px_rgba(17,17,17,0.05)]">
-              <p className="eyebrow">Studio staff</p>
-              <div className="mt-5 grid gap-3">
-                {payload.users.filter((item) => ["admin", "architect"].includes(item.role)).length ? (
-                  payload.users
-                    .filter((item) => ["admin", "architect"].includes(item.role))
-                    .map((staffMember) => (
-                      <div key={`${staffMember.email}-${staffMember.role}`} className="rounded-[22px] border border-black/8 bg-white/65 p-4">
-                        <div className="flex items-center justify-between gap-4">
-                          <div>
-                            <p className="font-medium text-[#111111]">{staffMember.username || staffMember.fullName}</p>
-                            <p className="mt-1 text-sm text-[#5d5d5d]">{staffMember.email}</p>
-                          </div>
-                          <p className="text-xs uppercase tracking-[0.22em] text-[#8f6532]">{staffMember.role}</p>
-                        </div>
+          <section className="glass-panel rounded-[30px] p-6">
+            <p className="eyebrow">Service mix</p>
+            <div className="mt-5 grid gap-3">
+              {Object.entries(payload.categoryBreakdown).length ? (
+                Object.entries(payload.categoryBreakdown)
+                  .sort(([, left], [, right]) => Number(right) - Number(left))
+                  .slice(0, 5)
+                  .map(([category, total]) => (
+                    <div key={category} className="rounded-[22px] border border-black/8 bg-white/70 p-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <p className="font-medium text-[#111111]">{category}</p>
+                        <p className="text-sm text-[#8f6532]">{total}</p>
                       </div>
-                    ))
-                ) : (
-                  <p className="text-sm text-[#5d5d5d]">No staff accounts are available yet.</p>
-                )}
-              </div>
-            </div>
-
-            <div className="glass-panel rounded-[28px] p-6">
-              <p className="eyebrow">Website inquiries</p>
-              <div className="mt-5 grid gap-3">
-                {leads.length ? (
-                  leads.map((lead) => (
-                    <div key={lead._id} className="rounded-[22px] border border-black/8 bg-white/65 p-4">
-                      <p className="font-medium text-[#111111]">{lead.fullName}</p>
-                      <p className="mt-1 text-sm text-[#5d5d5d]">{lead.email}</p>
-                      <p className="mt-2 text-sm text-[#5d5d5d]">{lead.projectType || "Project type pending"} • {lead.budget || "Budget pending"}</p>
                     </div>
                   ))
-                ) : (
-                  <p className="text-sm text-[#5d5d5d]">No contact leads have been captured yet.</p>
-                )}
-              </div>
+              ) : (
+                <p className="text-sm text-[#5d5d5d]">No service data is available yet.</p>
+              )}
             </div>
-
-            <div className="glass-panel rounded-[28px] p-6">
-              <p className="eyebrow">Architect workload</p>
-              <div className="mt-5 grid gap-3">
-                {payload.architectWorkload.length ? (
-                  payload.architectWorkload.map((item) => (
-                    <div key={item.architect.id} className="rounded-[22px] border border-black/8 bg-white/65 p-4">
-                      <p className="font-medium text-[#111111]">{item.architect.fullName}</p>
-                      <p className="mt-2 text-sm text-[#5d5d5d]">
-                        Total {item.total} • Active {item.active} • Review {item.review} • Completed {item.completed}
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-[#5d5d5d]">No architect workload data is available yet.</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-6 xl:grid-cols-[0.5fr_0.5fr]">
-            <div className="glass-panel rounded-[28px] p-6">
-              <p className="eyebrow">Category breakdown</p>
-              <div className="mt-5 grid gap-3">
-                {Object.entries(payload.categoryBreakdown).map(([category, total]) => (
-                  <div key={category} className="rounded-[22px] border border-black/8 bg-white/65 p-4">
-                    <p className="font-medium text-[#111111]">{category}</p>
-                    <p className="mt-2 text-sm text-[#5d5d5d]">{total} projects</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="glass-panel rounded-[28px] p-6">
-              <p className="eyebrow">Recent activity</p>
-              <div className="mt-5 grid gap-3">
-                {payload.recentActivity.length ? (
-                  payload.recentActivity.map((entry) => (
-                    <div key={entry._id} className="rounded-[22px] border border-black/8 bg-white/65 p-4">
-                      <p className="font-medium text-[#111111]">{entry.action.replace(/_/g, " ")}</p>
-                      <p className="mt-2 text-sm text-[#5d5d5d]">
-                        {entry.actor?.fullName || "System"} • {new Date(entry.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-[#5d5d5d]">No audit activity is recorded yet.</p>
-                )}
-              </div>
-            </div>
-          </div>
+          </section>
         </div>
-      )}
-    </WorkspaceShell>
+      </div>
+    </div>
   );
 }
 
 export function AdminDashboard() {
   return (
-    <ProtectedArea roles={["admin"]}>
-      {({ token, user }) => <AdminDashboardContent token={token} user={user} />}
-    </ProtectedArea>
+    <AdminShell
+      title="Admin control center"
+      description="Keep the overview page tight: approvals, studio pulse, and the activity trail that needs your attention."
+    >
+      {({ token }) => <AdminDashboardContent token={token} />}
+    </AdminShell>
   );
 }

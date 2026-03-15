@@ -55,7 +55,14 @@ async function updateProfile(req, res) {
 
 async function createArchitect(req, res) {
   const { username, fullName, email, phone, specializationTags = [], companyArchitectId } = req.body;
-  const password = req.body.password || crypto.randomBytes(8).toString("base64url");
+  const providedPassword = typeof req.body.password === "string" ? req.body.password.trim() : "";
+  const generatedPassword = crypto.randomBytes(8).toString("base64url");
+  const password = providedPassword || generatedPassword;
+
+  if (providedPassword && providedPassword.length < 8) {
+    return res.status(400).json({ message: "Password must be at least 8 characters long." });
+  }
+
   const displayName = fullName || username;
   const avatarSeed = `${displayName}-${crypto.randomBytes(4).toString("hex")}`;
 
@@ -84,7 +91,33 @@ async function createArchitect(req, res) {
 
   return res.status(201).json({
     user: safeUser,
-    temporaryPassword: password,
+    temporaryPassword: providedPassword ? undefined : generatedPassword,
+  });
+}
+
+async function removeArchitect(req, res) {
+  const architect = await User.findOne({ _id: req.params.id, role: "architect" }).select("-password");
+
+  if (!architect) {
+    return res.status(404).json({ message: "Architect not found." });
+  }
+
+  if (!architect.isActive) {
+    return res.status(400).json({ message: "Architect access has already been removed." });
+  }
+
+  architect.isActive = false;
+  await architect.save();
+
+  await logAudit({
+    action: "ARCHITECT_REMOVED",
+    actor: req.user._id,
+    targetUser: architect._id,
+  });
+
+  return res.json({
+    message: "Architect access removed successfully.",
+    user: architect,
   });
 }
 
@@ -156,6 +189,7 @@ module.exports = {
   listUsers,
   updateProfile,
   createArchitect,
+  removeArchitect,
   updateUserStatus,
   createInvite,
   listInvites,
