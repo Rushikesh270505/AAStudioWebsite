@@ -2,6 +2,7 @@ export type Role = "public_user" | "client" | "architect" | "admin";
 
 export type UserProfile = {
   id: string;
+  _id?: string;
   fullName: string;
   name?: string;
   username?: string;

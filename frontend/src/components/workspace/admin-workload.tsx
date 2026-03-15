@@ -16,6 +16,10 @@ type ArchitectDirectoryEntry = UserProfile & {
   };
 };
 
+function getUserKey(user?: Pick<UserProfile, "id" | "_id"> | null) {
+  return user?._id || user?.id || "";
+}
+
 function WorkloadContent({ token }: { token: string }) {
   const [architects, setArchitects] = useState<ArchitectDirectoryEntry[]>([]);
   const [reportBundles, setReportBundles] = useState<ArchitectReportBundle[]>([]);
@@ -84,9 +88,11 @@ function WorkloadContent({ token }: { token: string }) {
               const total = Math.max(architect.workload.total, 1);
               const activeRatio = Math.round((architect.workload.active / total) * 100);
               const reviewRatio = Math.round((architect.workload.review / total) * 100);
+              const latestReport =
+                reportBundles.find((item) => getUserKey(item.architect) === getUserKey(architect))?.reports[0] || null;
 
               return (
-                <div key={architect.id} className="rounded-[26px] border border-black/8 bg-white/72 p-5 shadow-[0_14px_30px_rgba(17,17,17,0.04)]">
+                <div key={getUserKey(architect)} className="rounded-[26px] border border-black/8 bg-white/72 p-5 shadow-[0_14px_30px_rgba(17,17,17,0.04)]">
                   <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                       <div className="flex flex-wrap items-center gap-3">
@@ -144,25 +150,25 @@ function WorkloadContent({ token }: { token: string }) {
 
                   <div className="mt-5 rounded-[22px] border border-black/8 bg-white/78 p-4">
                     <div className="flex items-center justify-between gap-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-[#8f6532]">Latest reports</p>
+                      <p className="text-xs uppercase tracking-[0.2em] text-[#8f6532]">Latest report</p>
                       <p className="text-sm text-[#5d5d5d]">
                         Last report{" "}
                         {architect.lastReportAt ? new Date(architect.lastReportAt).toLocaleDateString() : "pending"}
                       </p>
                     </div>
                     <div className="mt-4 grid gap-3">
-                      {(reportBundles.find((item) => item.architect.id === architect.id)?.reports || []).slice(0, 3).map((report) => (
-                        <div key={report._id} className="rounded-[18px] border border-black/8 bg-white/85 p-4">
+                      {latestReport ? (
+                        <div key={latestReport._id} className="rounded-[18px] border border-black/8 bg-white/85 p-4">
                           <div className="flex items-center justify-between gap-4">
-                            <p className="text-xs uppercase tracking-[0.18em] text-[#8f6532]">{report.reportDateKey}</p>
-                            <p className="text-sm text-[#5d5d5d]">{new Date(report.createdAt).toLocaleTimeString()}</p>
+                            <p className="text-xs uppercase tracking-[0.18em] text-[#8f6532]">{latestReport.reportDateKey}</p>
+                            <p className="text-sm text-[#5d5d5d]">{new Date(latestReport.createdAt).toLocaleTimeString()}</p>
                           </div>
-                          <p className="mt-3 text-sm leading-7 text-[#4f4f4f]">{report.summary}</p>
-                          {report.images.length ? (
+                          <p className="mt-3 text-sm leading-7 text-[#4f4f4f]">{latestReport.summary}</p>
+                          {latestReport.images.length ? (
                             <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-3">
-                              {report.images.map((image) => (
+                              {latestReport.images.map((image) => (
                                 <Image
-                                  key={`${report._id}-${image.name}`}
+                                  key={`${latestReport._id}-${image.name}`}
                                   src={image.dataUrl}
                                   alt={image.name}
                                   width={160}
@@ -174,10 +180,9 @@ function WorkloadContent({ token }: { token: string }) {
                             </div>
                           ) : null}
                         </div>
-                      ))}
-                      {!reportBundles.find((item) => item.architect.id === architect.id)?.reports?.length ? (
+                      ) : (
                         <p className="text-sm text-[#5d5d5d]">No reports submitted yet.</p>
-                      ) : null}
+                      )}
                     </div>
                   </div>
                 </div>

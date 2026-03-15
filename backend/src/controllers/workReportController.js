@@ -88,7 +88,10 @@ async function listReportsByArchitect(req, res) {
       grouped.push(reportMap.get(architectId));
     }
 
-    reportMap.get(architectId).reports.push(report);
+    // The admin workload panel only needs the most recent submission for each architect.
+    if (!reportMap.get(architectId).reports.length) {
+      reportMap.get(architectId).reports.push(report);
+    }
   }
 
   return res.json(grouped);

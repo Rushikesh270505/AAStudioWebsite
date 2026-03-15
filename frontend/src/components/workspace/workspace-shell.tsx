@@ -61,7 +61,7 @@ export function WorkspaceShell({
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f7f4ee_0%,#f3f0ea_45%,#f8f6f2_100%)]">
       <div className="grid min-h-screen lg:grid-cols-[280px_1fr]">
-        <aside className="border-r border-black/6 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.86),transparent_55%),linear-gradient(180deg,rgba(255,255,255,0.78),rgba(248,243,236,0.92))] p-5 backdrop-blur-xl">
+        <aside className="border-r border-black/6 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.86),transparent_55%),linear-gradient(180deg,rgba(255,255,255,0.78),rgba(248,243,236,0.92))] p-5 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-y-auto">
           <Link href={getWorkspacePath(user.role)} className="glass-panel flex items-center gap-4 rounded-[28px] p-4">
             <img
               src={user.avatarUrl}
@@ -82,7 +82,7 @@ export function WorkspaceShell({
             </div>
           </Link>
 
-          <nav className="mt-6 grid gap-2">
+          <nav className="mt-6 grid gap-2 lg:flex-1">
             {navItems.map((item) => {
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
@@ -105,7 +105,7 @@ export function WorkspaceShell({
 
           <button
             type="button"
-            className="premium-button-soft mt-6 w-full px-4 py-3 text-sm"
+            className="premium-button-soft mt-6 w-full px-4 py-3 text-sm lg:mt-auto"
             onClick={() => void handleSignOut()}
             disabled={signingOut}
           >
