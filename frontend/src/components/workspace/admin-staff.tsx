@@ -53,16 +53,19 @@ function matchesArchitectSearch(user: UserProfile, query: string) {
 }
 
 const sectionTabs = [
-  { href: "#staff-summary", label: "Summary" },
-  { href: "#staff-create", label: "Create" },
-  { href: "#staff-active", label: "Active" },
-  { href: "#staff-admins", label: "Admins" },
-  { href: "#staff-archived", label: "Archived" },
-];
+  { id: "summary", label: "Summary" },
+  { id: "create", label: "Create" },
+  { id: "active", label: "Active" },
+  { id: "admins", label: "Admins" },
+  { id: "archived", label: "Archived" },
+] as const;
+
+type StaffSection = (typeof sectionTabs)[number]["id"];
 
 function StaffManagementContent({ token }: { token: string }) {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [architectForm, setArchitectForm] = useState<ArchitectFormState>(emptyForm);
+  const [activeSection, setActiveSection] = useState<StaffSection>("summary");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -169,6 +172,7 @@ function StaffManagementContent({ token }: { token: string }) {
       companyArchitectId: "",
       archivedSourceId: getUserKey(architect),
     });
+    setActiveSection("create");
     setError("");
     setMessage("Archived architect details loaded. Set a new password and complete any remaining fields to reactivate.");
     createSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -187,28 +191,37 @@ function StaffManagementContent({ token }: { token: string }) {
       <div className="glass-panel sticky top-4 z-20 rounded-[24px] p-3 backdrop-blur-xl">
         <div className="flex flex-wrap gap-2">
           {sectionTabs.map((tab) => (
-            <a
-              key={tab.href}
-              href={tab.href}
-              className="glass-tab rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em] text-[#5d5d5d] transition hover:border-[#c8a97e]/60 hover:text-[#2C2C2C]"
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveSection(tab.id)}
+              className={`glass-tab rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em] transition ${
+                activeSection === tab.id
+                  ? "border-[#c8a97e]/70 bg-white/90 text-[#2C2C2C] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_12px_24px_rgba(45,45,45,0.08)]"
+                  : "text-[#5d5d5d] hover:border-[#c8a97e]/60 hover:text-[#2C2C2C]"
+              }`}
             >
               {tab.label}
-            </a>
+            </button>
           ))}
         </div>
       </div>
 
-      <div id="staff-summary" className="grid scroll-mt-28 gap-4 md:grid-cols-3">
-        <MetricCard label="Active architects" value={activeArchitects.length} hint="Current staff with access." />
-        <MetricCard label="Protected admins" value={protectedAdmins.length} hint="Reserved admin accounts." />
-        <MetricCard label="Archived architects" value={archivedArchitects.length} hint="Removed from active access." />
-      </div>
+      {message ? <div className="glass-panel rounded-[28px] p-5 text-sm leading-7 text-[#5d5d5d]">{message}</div> : null}
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)]">
+      {activeSection === "summary" ? (
+        <div className="grid gap-4 md:grid-cols-3">
+          <MetricCard label="Active architects" value={activeArchitects.length} hint="Current staff with access." />
+          <MetricCard label="Protected admins" value={protectedAdmins.length} hint="Reserved admin accounts." />
+          <MetricCard label="Archived architects" value={archivedArchitects.length} hint="Removed from active access." />
+        </div>
+      ) : null}
+
+      {activeSection === "create" ? (
         <section
           id="staff-create"
           ref={createSectionRef}
-          className="glass-panel scroll-mt-28 rounded-[30px] p-6"
+          className="glass-panel rounded-[30px] p-6"
         >
           <p className="eyebrow">Create staff account</p>
           <h2 className="display-title mt-4 text-3xl">
@@ -274,10 +287,11 @@ function StaffManagementContent({ token }: { token: string }) {
               {submitting ? (architectForm.archivedSourceId ? "Reactivating..." : "Creating...") : architectForm.archivedSourceId ? "Reactivate account" : "Create account"}
             </button>
           </form>
-          {message ? <p className="mt-4 text-sm leading-7 text-[#5d5d5d]">{message}</p> : null}
         </section>
+      ) : null}
 
-        <section id="staff-active" className="glass-panel scroll-mt-28 rounded-[30px] p-6">
+      {activeSection === "active" ? (
+        <section id="staff-active" className="glass-panel rounded-[30px] p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="eyebrow">Studio staff</p>
@@ -343,10 +357,10 @@ function StaffManagementContent({ token }: { token: string }) {
             )}
           </div>
         </section>
-      </div>
+      ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <section id="staff-admins" className="glass-panel scroll-mt-28 rounded-[30px] p-6">
+      {activeSection === "admins" ? (
+        <section id="staff-admins" className="glass-panel rounded-[30px] p-6">
           <p className="eyebrow">Protected admins</p>
           <div className="mt-5 grid gap-3">
             {protectedAdmins.map((admin) => (
@@ -364,8 +378,10 @@ function StaffManagementContent({ token }: { token: string }) {
             ))}
           </div>
         </section>
+      ) : null}
 
-        <section id="staff-archived" className="glass-panel scroll-mt-28 rounded-[30px] p-6">
+      {activeSection === "archived" ? (
+        <section id="staff-archived" className="glass-panel rounded-[30px] p-6">
           <p className="eyebrow">Archived architects</p>
           <div className="mt-5">
             <input
@@ -405,7 +421,7 @@ function StaffManagementContent({ token }: { token: string }) {
             )}
           </div>
         </section>
-      </div>
+      ) : null}
     </div>
   );
 }
