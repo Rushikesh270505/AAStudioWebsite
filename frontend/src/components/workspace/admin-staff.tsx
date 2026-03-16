@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { AdminShell } from "@/components/workspace/admin-shell";
 import { MetricCard } from "@/components/workspace/metric-card";
 import { PresenceIndicator } from "@/components/workspace/presence-indicator";
@@ -44,6 +44,7 @@ function StaffManagementContent({ token }: { token: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [archivingId, setArchivingId] = useState("");
   const [terminatingId, setTerminatingId] = useState("");
+  const createSectionRef = useRef<HTMLElement | null>(null);
 
   async function loadUsers() {
     try {
@@ -132,6 +133,19 @@ function StaffManagementContent({ token }: { token: string }) {
     }
   }
 
+  function handleActivateArchivedArchitect(architect: UserProfile) {
+    setArchitectForm({
+      username: architect.fullName || architect.username || "",
+      email: architect.archivedEmail || architect.email || "",
+      password: "",
+      phone: architect.archivedPhone || architect.phone || "",
+      companyArchitectId: "",
+    });
+    setError("");
+    setMessage("Archived architect details loaded. Set a new password and complete any remaining fields to reactivate.");
+    createSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   const activeArchitects = users.filter((user) => user.role === "architect" && user.isActive !== false);
   const protectedAdmins = users.filter((user) => user.role === "admin" && user.isActive !== false);
   const archivedArchitects = users.filter((user) => user.role === "architect" && user.isActive === false);
@@ -161,7 +175,11 @@ function StaffManagementContent({ token }: { token: string }) {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)]">
-        <section id="staff-create" className="glass-panel scroll-mt-28 rounded-[30px] p-6">
+        <section
+          id="staff-create"
+          ref={createSectionRef}
+          className="glass-panel scroll-mt-28 rounded-[30px] p-6"
+        >
           <p className="eyebrow">Create staff account</p>
           <h2 className="display-title mt-4 text-3xl">Add a new architect</h2>
           <form onSubmit={handleCreateArchitect} className="mt-6 grid gap-3">
@@ -294,12 +312,23 @@ function StaffManagementContent({ token }: { token: string }) {
             {archivedArchitects.length ? (
               archivedArchitects.map((architect) => (
                 <div key={getUserKey(architect)} className="rounded-[24px] border border-black/8 bg-white/70 p-5">
-                  <p className="text-lg font-semibold text-[#111111]">{architect.fullName || architect.username}</p>
-                  <p className="mt-1 text-sm text-[#5d5d5d]">{architect.archivedEmail || architect.email}</p>
-                  {architect.archivedPhone ? <p className="mt-1 text-sm text-[#5d5d5d]">{architect.archivedPhone}</p> : null}
-                  <p className="mt-3 text-xs uppercase tracking-[0.22em] text-[#8f6532]">
-                    Archived {architect.archivedAt ? new Date(architect.archivedAt).toLocaleDateString() : ""}
-                  </p>
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-lg font-semibold text-[#111111]">{architect.fullName || architect.username}</p>
+                      <p className="mt-1 text-sm text-[#5d5d5d]">{architect.archivedEmail || architect.email}</p>
+                      {architect.archivedPhone ? <p className="mt-1 text-sm text-[#5d5d5d]">{architect.archivedPhone}</p> : null}
+                      <p className="mt-3 text-xs uppercase tracking-[0.22em] text-[#8f6532]">
+                        Archived {architect.archivedAt ? new Date(architect.archivedAt).toLocaleDateString() : ""}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleActivateArchivedArchitect(architect)}
+                      className="rounded-full border border-[#c8a97e]/55 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,232,214,0.92))] px-5 py-2.5 text-sm font-medium text-[#7d5330] transition hover:shadow-[0_12px_24px_rgba(200,169,126,0.16)]"
+                    >
+                      Activate
+                    </button>
+                  </div>
                 </div>
               ))
             ) : (
