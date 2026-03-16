@@ -27,6 +27,29 @@ function getUserKey(user: UserProfile) {
   return user._id || user.id;
 }
 
+function normalizeSearchValue(value: string | undefined) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function matchesArchitectSearch(user: UserProfile, query: string) {
+  if (!query) {
+    return true;
+  }
+
+  const search = normalizeSearchValue(query);
+  const fields = [
+    user.username,
+    user.fullName,
+    user.email,
+    user.archivedEmail,
+    user.phone,
+    user.archivedPhone,
+    user.companyArchitectId,
+  ];
+
+  return fields.some((field) => normalizeSearchValue(field).includes(search));
+}
+
 const sectionTabs = [
   { href: "#staff-summary", label: "Summary" },
   { href: "#staff-create", label: "Create" },
@@ -44,6 +67,8 @@ function StaffManagementContent({ token }: { token: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [archivingId, setArchivingId] = useState("");
   const [terminatingId, setTerminatingId] = useState("");
+  const [activeSearch, setActiveSearch] = useState("");
+  const [archivedSearch, setArchivedSearch] = useState("");
   const createSectionRef = useRef<HTMLElement | null>(null);
 
   async function loadUsers() {
@@ -149,6 +174,8 @@ function StaffManagementContent({ token }: { token: string }) {
   const activeArchitects = users.filter((user) => user.role === "architect" && user.isActive !== false);
   const protectedAdmins = users.filter((user) => user.role === "admin" && user.isActive !== false);
   const archivedArchitects = users.filter((user) => user.role === "architect" && user.isActive === false);
+  const filteredActiveArchitects = activeArchitects.filter((user) => matchesArchitectSearch(user, activeSearch));
+  const filteredArchivedArchitects = archivedArchitects.filter((user) => matchesArchitectSearch(user, archivedSearch));
 
   return (
     <div className="grid gap-6">
@@ -238,11 +265,19 @@ function StaffManagementContent({ token }: { token: string }) {
               {activeArchitects.length} staff
             </div>
           </div>
+          <div className="mt-5">
+            <input
+              value={activeSearch}
+              onChange={(event) => setActiveSearch(event.target.value)}
+              placeholder="Search active staff by username, email, phone, or architect ID"
+              className="w-full rounded-2xl border border-black/10 bg-white/80 px-4 py-3 text-sm outline-none transition focus:border-[#c8a97e]"
+            />
+          </div>
           <div className="mt-6 grid gap-3">
             {loading ? (
               Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-28 animate-pulse rounded-[24px] bg-white/60" />)
-            ) : activeArchitects.length ? (
-              activeArchitects.map((staffMember) => (
+            ) : filteredActiveArchitects.length ? (
+              filteredActiveArchitects.map((staffMember) => (
                 <div key={getUserKey(staffMember)} className="rounded-[24px] border border-black/8 bg-white/70 p-5">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
@@ -280,7 +315,9 @@ function StaffManagementContent({ token }: { token: string }) {
                 </div>
               ))
             ) : (
-              <p className="text-sm text-[#5d5d5d]">No architect accounts are active yet.</p>
+              <p className="text-sm text-[#5d5d5d]">
+                {activeSearch ? "No active architects match this search." : "No architect accounts are active yet."}
+              </p>
             )}
           </div>
         </section>
@@ -308,9 +345,17 @@ function StaffManagementContent({ token }: { token: string }) {
 
         <section id="staff-archived" className="glass-panel scroll-mt-28 rounded-[30px] p-6">
           <p className="eyebrow">Archived architects</p>
+          <div className="mt-5">
+            <input
+              value={archivedSearch}
+              onChange={(event) => setArchivedSearch(event.target.value)}
+              placeholder="Search archived staff by username, email, phone, or architect ID"
+              className="w-full rounded-2xl border border-black/10 bg-white/80 px-4 py-3 text-sm outline-none transition focus:border-[#c8a97e]"
+            />
+          </div>
           <div className="mt-5 grid gap-3">
-            {archivedArchitects.length ? (
-              archivedArchitects.map((architect) => (
+            {filteredArchivedArchitects.length ? (
+              filteredArchivedArchitects.map((architect) => (
                 <div key={getUserKey(architect)} className="rounded-[24px] border border-black/8 bg-white/70 p-5">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
@@ -332,7 +377,9 @@ function StaffManagementContent({ token }: { token: string }) {
                 </div>
               ))
             ) : (
-              <p className="text-sm text-[#5d5d5d]">No architects have been removed yet.</p>
+              <p className="text-sm text-[#5d5d5d]">
+                {archivedSearch ? "No archived architects match this search." : "No architects have been removed yet."}
+              </p>
             )}
           </div>
         </section>
