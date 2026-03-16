@@ -279,9 +279,10 @@ export function createArchitectAccount(
     specializationTags?: string[];
     companyArchitectId?: string;
     password: string;
+    archivedSourceId?: string;
   },
 ) {
-  return request<{ user: UserProfile; temporaryPassword?: string }>("/users/architects", {
+  return request<{ user: UserProfile; temporaryPassword?: string; message?: string }>("/users/architects", {
     method: "POST",
     headers: authHeaders(token),
     body: JSON.stringify(payload),

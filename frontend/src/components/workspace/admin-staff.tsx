@@ -13,6 +13,7 @@ type ArchitectFormState = {
   password: string;
   phone: string;
   companyArchitectId: string;
+  archivedSourceId?: string;
 };
 
 const emptyForm: ArchitectFormState = {
@@ -21,6 +22,7 @@ const emptyForm: ArchitectFormState = {
   password: "",
   phone: "",
   companyArchitectId: "",
+  archivedSourceId: undefined,
 };
 
 function getUserKey(user: UserProfile) {
@@ -118,7 +120,7 @@ function StaffManagementContent({ token }: { token: string }) {
 
     try {
       const response = await createArchitectAccount(token, architectForm);
-      setMessage(`Architect account created for ${response.user.username || response.user.fullName}.`);
+      setMessage(response.message || `Architect account created for ${response.user.username || response.user.fullName}.`);
       setArchitectForm(emptyForm);
       await loadUsers();
     } catch (createError) {
@@ -165,6 +167,7 @@ function StaffManagementContent({ token }: { token: string }) {
       password: "",
       phone: architect.archivedPhone || architect.phone || "",
       companyArchitectId: "",
+      archivedSourceId: getUserKey(architect),
     });
     setError("");
     setMessage("Archived architect details loaded. Set a new password and complete any remaining fields to reactivate.");
@@ -208,7 +211,14 @@ function StaffManagementContent({ token }: { token: string }) {
           className="glass-panel scroll-mt-28 rounded-[30px] p-6"
         >
           <p className="eyebrow">Create staff account</p>
-          <h2 className="display-title mt-4 text-3xl">Add a new architect</h2>
+          <h2 className="display-title mt-4 text-3xl">
+            {architectForm.archivedSourceId ? "Reactivate archived architect" : "Add a new architect"}
+          </h2>
+          {architectForm.archivedSourceId ? (
+            <p className="mt-3 text-sm leading-7 text-[#5d5d5d]">
+              This form is linked to an archived architect. Set a new password and complete the remaining fields to move them back into the active staff list.
+            </p>
+          ) : null}
           <form onSubmit={handleCreateArchitect} className="mt-6 grid gap-3">
             <input
               required
@@ -248,8 +258,20 @@ function StaffManagementContent({ token }: { token: string }) {
                 className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none focus:border-[#c8a97e]"
               />
             </div>
+            {architectForm.archivedSourceId ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setArchitectForm(emptyForm);
+                  setMessage("");
+                }}
+                className="premium-button-soft mt-1 px-4 py-3 text-sm font-medium"
+              >
+                Cancel reactivation
+              </button>
+            ) : null}
             <button type="submit" disabled={submitting} className="premium-button mt-2 px-4 py-3 text-sm font-medium disabled:opacity-60">
-              {submitting ? "Creating..." : "Create account"}
+              {submitting ? (architectForm.archivedSourceId ? "Reactivating..." : "Creating...") : architectForm.archivedSourceId ? "Reactivate account" : "Create account"}
             </button>
           </form>
           {message ? <p className="mt-4 text-sm leading-7 text-[#5d5d5d]">{message}</p> : null}

@@ -14,6 +14,40 @@ const AuditLog = require("../models/AuditLog");
 const { buildAvatarUrl } = require("../utils/avatar");
 const { createNotifications, logAudit } = require("../utils/activity");
 
+function normalizeArchitectUsername(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/[^a-z0-9@._-]/g, "");
+}
+
+async function ensureArchitectCredentialsAvailable({ userId, email, username }) {
+  const emailQuery = {
+    email,
+    ...(userId ? { _id: { $ne: userId } } : {}),
+  };
+  const existingEmailUser = await User.findOne(emailQuery).select("_id");
+
+  if (existingEmailUser) {
+    throw new Error("That email is already used by another account.");
+  }
+
+  if (!username) {
+    return;
+  }
+
+  const usernameQuery = {
+    username,
+    ...(userId ? { _id: { $ne: userId } } : {}),
+  };
+  const existingUsernameUser = await User.findOne(usernameQuery).select("_id");
+
+  if (existingUsernameUser) {
+    throw new Error("That username is already used by another account.");
+  }
+}
+
 async function listArchitects(req, res) {
   const architects = await User.find({ role: "architect", isActive: true })
     .select("fullName name username email role avatarUrl avatarSeed companyArchitectId specializationTags studioName isOnline lastLoginAt lastReportAt")
@@ -63,45 +97,115 @@ async function updateProfile(req, res) {
 }
 
 async function createArchitect(req, res) {
-  const { username, fullName, email, phone, specializationTags = [], companyArchitectId } = req.body;
+  const { username, fullName, email, phone, specializationTags = [], companyArchitectId, archivedSourceId } = req.body;
   const providedPassword = typeof req.body.password === "string" ? req.body.password.trim() : "";
   const generatedPassword = crypto.randomBytes(8).toString("base64url");
   const password = providedPassword || generatedPassword;
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  const normalizedUsername = normalizeArchitectUsername(username);
 
   if (providedPassword && providedPassword.length < 8) {
     return res.status(400).json({ message: "Password must be at least 8 characters long." });
   }
 
   const displayName = fullName || username;
-  const avatarSeed = `${displayName}-${crypto.randomBytes(4).toString("hex")}`;
 
-  const user = await User.create({
-    fullName: displayName,
-    name: displayName,
-    username,
-    email: email?.trim().toLowerCase(),
-    password,
-    phone,
-    role: "architect",
-    specializationTags,
-    companyArchitectId: companyArchitectId || `ARCH-${Date.now()}`,
-    avatarSeed,
-    avatarUrl: buildAvatarUrl(avatarSeed),
-    onboardingCompleted: true,
-  });
+  if (!displayName || !normalizedEmail || !normalizedUsername) {
+    return res.status(400).json({ message: "Username and email are required." });
+  }
 
-  await logAudit({
-    action: "ARCHITECT_CREATED",
-    actor: req.user._id,
-    targetUser: user._id,
-  });
+  try {
+    if (archivedSourceId) {
+      const architect = await User.findOne({ _id: archivedSourceId, role: "architect", isActive: false }).select("+password");
 
-  const safeUser = await User.findById(user._id).select("-password");
+      if (!architect) {
+        return res.status(404).json({ message: "Archived architect not found." });
+      }
 
-  return res.status(201).json({
-    user: safeUser,
-    temporaryPassword: providedPassword ? undefined : generatedPassword,
-  });
+      await ensureArchitectCredentialsAvailable({
+        userId: architect._id,
+        email: normalizedEmail,
+        username: normalizedUsername,
+      });
+
+      const avatarSeed = `${displayName}-${crypto.randomBytes(4).toString("hex")}`;
+
+      architect.fullName = displayName;
+      architect.name = displayName;
+      architect.username = normalizedUsername;
+      architect.email = normalizedEmail;
+      architect.password = password;
+      architect.phone = phone || architect.archivedPhone || "";
+      architect.role = "architect";
+      architect.specializationTags = specializationTags;
+      architect.companyArchitectId = companyArchitectId || `ARCH-${Date.now()}`;
+      architect.avatarSeed = avatarSeed;
+      architect.avatarUrl = buildAvatarUrl(avatarSeed);
+      architect.isActive = true;
+      architect.isOnline = false;
+      architect.archivedEmail = undefined;
+      architect.archivedPhone = undefined;
+      architect.archivedAt = undefined;
+      architect.onboardingCompleted = true;
+      await architect.save();
+
+      await logAudit({
+        action: "ARCHITECT_REACTIVATED",
+        actor: req.user._id,
+        targetUser: architect._id,
+      });
+
+      const safeArchitect = await User.findById(architect._id).select("-password");
+
+      return res.status(201).json({
+        user: safeArchitect,
+        temporaryPassword: providedPassword ? undefined : generatedPassword,
+        message: `Architect account reactivated for ${safeArchitect.username || safeArchitect.fullName}.`,
+      });
+    }
+
+    await ensureArchitectCredentialsAvailable({
+      email: normalizedEmail,
+      username: normalizedUsername,
+    });
+
+    const avatarSeed = `${displayName}-${crypto.randomBytes(4).toString("hex")}`;
+
+    const user = await User.create({
+      fullName: displayName,
+      name: displayName,
+      username: normalizedUsername,
+      email: normalizedEmail,
+      password,
+      phone,
+      role: "architect",
+      specializationTags,
+      companyArchitectId: companyArchitectId || `ARCH-${Date.now()}`,
+      avatarSeed,
+      avatarUrl: buildAvatarUrl(avatarSeed),
+      onboardingCompleted: true,
+    });
+
+    await logAudit({
+      action: "ARCHITECT_CREATED",
+      actor: req.user._id,
+      targetUser: user._id,
+    });
+
+    const safeUser = await User.findById(user._id).select("-password");
+
+    return res.status(201).json({
+      user: safeUser,
+      temporaryPassword: providedPassword ? undefined : generatedPassword,
+      message: `Architect account created for ${safeUser.username || safeUser.fullName}.`,
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    throw error;
+  }
 }
 
 async function archiveArchitect(req, res) {
