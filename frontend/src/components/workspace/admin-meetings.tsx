@@ -24,6 +24,10 @@ const initialForm: MeetingFormState = {
   meetLink: "",
 };
 
+function getUserKey(user: UserProfile) {
+  return user._id || user.id;
+}
+
 function toDayKey(value: string) {
   return new Date(value).toISOString().slice(0, 10);
 }
@@ -67,7 +71,7 @@ function AdminMeetingsContent({ token }: { token: string }) {
   const filteredUsers = useMemo(() => {
     const query = search.trim().toLowerCase();
     return directory.filter((user) => {
-      if (selectedParticipants.some((item) => item.id === user.id)) {
+      if (selectedParticipants.some((item) => getUserKey(item) === getUserKey(user))) {
         return false;
       }
 
@@ -98,7 +102,7 @@ function AdminMeetingsContent({ token }: { token: string }) {
         description: form.description,
         notes: form.description,
         meetLink: form.meetLink,
-        participants: selectedParticipants.map((user) => user.id),
+        participants: selectedParticipants.map((user) => getUserKey(user)),
       });
 
       setMessage("Meeting scheduled successfully. It is now visible in the recipients' meeting sections.");
@@ -113,6 +117,23 @@ function AdminMeetingsContent({ token }: { token: string }) {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function handleAddParticipant(user: UserProfile) {
+    setSelectedParticipants((current) => {
+      const nextKey = getUserKey(user);
+      if (current.some((item) => getUserKey(item) === nextKey)) {
+        return current;
+      }
+
+      return [...current, user];
+    });
+    setSearch("");
+  }
+
+  function handleRemoveParticipant(user: UserProfile) {
+    const targetKey = getUserKey(user);
+    setSelectedParticipants((current) => current.filter((item) => getUserKey(item) !== targetKey));
   }
 
   return (
@@ -188,9 +209,9 @@ function AdminMeetingsContent({ token }: { token: string }) {
                 <div className="mt-3 flex flex-wrap gap-2">
                   {selectedParticipants.map((user) => (
                     <button
-                      key={user.id}
+                      key={getUserKey(user)}
                       type="button"
-                      onClick={() => setSelectedParticipants((current) => current.filter((item) => item.id !== user.id))}
+                      onClick={() => handleRemoveParticipant(user)}
                       className="inline-flex items-center gap-2 rounded-full border border-black/8 bg-[#f7f1e7] px-3 py-2 text-sm text-[#5d5d5d]"
                     >
                       {user.username || user.fullName}
@@ -203,9 +224,9 @@ function AdminMeetingsContent({ token }: { token: string }) {
               <div className="mt-3 grid max-h-56 gap-2 overflow-auto">
                 {filteredUsers.slice(0, 8).map((user) => (
                   <button
-                    key={user.id}
+                    key={getUserKey(user)}
                     type="button"
-                    onClick={() => setSelectedParticipants((current) => [...current, user])}
+                    onClick={() => handleAddParticipant(user)}
                     className="rounded-[20px] border border-black/8 bg-white/80 px-4 py-3 text-left transition hover:border-[#c8a97e]/45"
                   >
                     <p className="font-medium text-[#111111]">{user.username || user.fullName}</p>
@@ -245,12 +266,12 @@ function AdminMeetingsContent({ token }: { token: string }) {
                     <p className="mt-2 text-sm text-[#5d5d5d]">{new Date(meeting.scheduledAt).toLocaleString()}</p>
                     <p className="mt-4 text-sm leading-7 text-[#5d5d5d]">{meeting.description || meeting.notes || "No description added."}</p>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {meeting.participants.map((participant) => (
-                      <span key={participant.id} className="rounded-full border border-black/8 bg-white/80 px-3 py-2 text-xs uppercase tracking-[0.18em] text-[#8f6532]">
+                <div className="flex flex-wrap gap-2">
+                  {meeting.participants.map((participant) => (
+                      <span key={getUserKey(participant)} className="rounded-full border border-black/8 bg-white/80 px-3 py-2 text-xs uppercase tracking-[0.18em] text-[#8f6532]">
                         {participant.username || participant.fullName}
                       </span>
-                    ))}
+                  ))}
                   </div>
                 </div>
                 {meeting.meetLink ? (
