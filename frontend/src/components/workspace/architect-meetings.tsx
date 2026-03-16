@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { fetchMeetings } from "@/lib/api";
+import { architectNavItems } from "@/components/workspace/architect-nav";
 import { MeetingCalendar } from "@/components/workspace/meeting-calendar";
 import { ProtectedArea } from "@/components/workspace/protected-area";
 import { WorkspaceShell } from "@/components/workspace/workspace-shell";
@@ -48,11 +49,7 @@ function ArchitectMeetingsContent({ token, user }: { token: string; user: UserPr
       user={user}
       title="Architect meetings"
       description="Keep your calendar clear, join Google Meet sessions on time, and see every admin-scheduled discussion in one place."
-      navItems={[
-        { href: "/architect/dashboard", label: "Dashboard" },
-        { href: "/architect/meetings", label: "Meetings" },
-        { href: "/architect/reports", label: "Reports" },
-      ]}
+      navItems={[...architectNavItems]}
       actions={
         <Link href="/projects" className="premium-button px-4 py-2 text-sm font-medium">
           Public portfolio

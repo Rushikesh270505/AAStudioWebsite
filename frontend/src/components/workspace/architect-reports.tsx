@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { createWorkReport, fetchArchitectReportStatus, fetchMyWorkReports } from "@/lib/api";
+import { architectNavItems } from "@/components/workspace/architect-nav";
 import { MetricCard } from "@/components/workspace/metric-card";
 import { ProtectedArea } from "@/components/workspace/protected-area";
 import { WorkspaceShell } from "@/components/workspace/workspace-shell";
@@ -105,11 +106,7 @@ function ArchitectReportsContent({ token, user }: { token: string; user: UserPro
       user={user}
       title="Architect reports"
       description="Submit what you completed today with image evidence. Admin sees these reports directly inside the workload section, and logout stays locked until a report is sent."
-      navItems={[
-        { href: "/architect/dashboard", label: "Dashboard" },
-        { href: "/architect/meetings", label: "Meetings" },
-        { href: "/architect/reports", label: "Reports" },
-      ]}
+      navItems={[...architectNavItems]}
       actions={
         <Link href="/projects" className="premium-button px-4 py-2 text-sm font-medium">
           Public portfolio
