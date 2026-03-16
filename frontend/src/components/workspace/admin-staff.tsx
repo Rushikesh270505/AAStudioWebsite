@@ -27,6 +27,14 @@ function getUserKey(user: UserProfile) {
   return user._id || user.id;
 }
 
+const sectionTabs = [
+  { href: "#staff-summary", label: "Summary" },
+  { href: "#staff-create", label: "Create" },
+  { href: "#staff-active", label: "Active" },
+  { href: "#staff-admins", label: "Admins" },
+  { href: "#staff-archived", label: "Archived" },
+];
+
 function StaffManagementContent({ token }: { token: string }) {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [architectForm, setArchitectForm] = useState<ArchitectFormState>(emptyForm);
@@ -132,14 +140,28 @@ function StaffManagementContent({ token }: { token: string }) {
     <div className="grid gap-6">
       {error ? <div className="glass-panel rounded-[28px] p-6 text-sm text-[#8f6532]">{error}</div> : null}
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="glass-panel sticky top-4 z-20 rounded-[24px] p-3 backdrop-blur-xl">
+        <div className="flex flex-wrap gap-2">
+          {sectionTabs.map((tab) => (
+            <a
+              key={tab.href}
+              href={tab.href}
+              className="glass-tab rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em] text-[#5d5d5d] transition hover:border-[#c8a97e]/60 hover:text-[#2C2C2C]"
+            >
+              {tab.label}
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <div id="staff-summary" className="grid scroll-mt-28 gap-4 md:grid-cols-3">
         <MetricCard label="Active architects" value={activeArchitects.length} hint="Current staff with access." />
         <MetricCard label="Protected admins" value={protectedAdmins.length} hint="Reserved admin accounts." />
         <MetricCard label="Archived architects" value={archivedArchitects.length} hint="Removed from active access." />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)]">
-        <section className="glass-panel rounded-[30px] p-6">
+        <section id="staff-create" className="glass-panel scroll-mt-28 rounded-[30px] p-6">
           <p className="eyebrow">Create staff account</p>
           <h2 className="display-title mt-4 text-3xl">Add a new architect</h2>
           <form onSubmit={handleCreateArchitect} className="mt-6 grid gap-3">
@@ -188,7 +210,7 @@ function StaffManagementContent({ token }: { token: string }) {
           {message ? <p className="mt-4 text-sm leading-7 text-[#5d5d5d]">{message}</p> : null}
         </section>
 
-        <section className="glass-panel rounded-[30px] p-6">
+        <section id="staff-active" className="glass-panel scroll-mt-28 rounded-[30px] p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="eyebrow">Studio staff</p>
@@ -247,7 +269,7 @@ function StaffManagementContent({ token }: { token: string }) {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <section className="glass-panel rounded-[30px] p-6">
+        <section id="staff-admins" className="glass-panel scroll-mt-28 rounded-[30px] p-6">
           <p className="eyebrow">Protected admins</p>
           <div className="mt-5 grid gap-3">
             {protectedAdmins.map((admin) => (
@@ -266,7 +288,7 @@ function StaffManagementContent({ token }: { token: string }) {
           </div>
         </section>
 
-        <section className="glass-panel rounded-[30px] p-6">
+        <section id="staff-archived" className="glass-panel scroll-mt-28 rounded-[30px] p-6">
           <p className="eyebrow">Archived architects</p>
           <div className="mt-5 grid gap-3">
             {archivedArchitects.length ? (
