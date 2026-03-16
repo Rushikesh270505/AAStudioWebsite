@@ -3,11 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
-import { createWorkReport, fetchArchitectReportStatus, fetchMyWorkReports, fetchNotifications } from "@/lib/api";
+import { createWorkReport, fetchArchitectReportStatus, fetchMyWorkReports } from "@/lib/api";
 import { MetricCard } from "@/components/workspace/metric-card";
 import { ProtectedArea } from "@/components/workspace/protected-area";
 import { WorkspaceShell } from "@/components/workspace/workspace-shell";
-import type { NotificationItem, UserProfile, WorkReport } from "@/lib/platform-types";
+import type { UserProfile, WorkReport } from "@/lib/platform-types";
 
 async function filesToDataUrls(files: FileList | null) {
   if (!files?.length) {
@@ -32,7 +32,6 @@ function ArchitectReportsContent({ token, user }: { token: string; user: UserPro
   const [summary, setSummary] = useState("");
   const [images, setImages] = useState<Array<{ name: string; dataUrl: string }>>([]);
   const [reports, setReports] = useState<WorkReport[]>([]);
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [hasReportedForSession, setHasReportedForSession] = useState(false);
   const [lastReportAt, setLastReportAt] = useState<string | null>(null);
   const [message, setMessage] = useState("");
@@ -44,16 +43,14 @@ function ArchitectReportsContent({ token, user }: { token: string; user: UserPro
 
     async function loadReports() {
       try {
-        const [reportPayload, statusPayload, notificationPayload] = await Promise.all([
+        const [reportPayload, statusPayload] = await Promise.all([
           fetchMyWorkReports(token),
           fetchArchitectReportStatus(token),
-          fetchNotifications(token),
         ]);
         if (!cancelled) {
           setReports(reportPayload);
           setHasReportedForSession(statusPayload.hasReportedForSession);
           setLastReportAt(statusPayload.lastReportAt);
-          setNotifications(notificationPayload);
           setError("");
         }
       } catch (loadError) {
@@ -89,15 +86,13 @@ function ArchitectReportsContent({ token, user }: { token: string; user: UserPro
       setSummary("");
       setImages([]);
       setMessage("Today\u2019s report has been submitted. You can sign out now.");
-      const [reportPayload, statusPayload, notificationPayload] = await Promise.all([
+      const [reportPayload, statusPayload] = await Promise.all([
         fetchMyWorkReports(token),
         fetchArchitectReportStatus(token),
-        fetchNotifications(token),
       ]);
       setReports(reportPayload);
       setHasReportedForSession(statusPayload.hasReportedForSession);
       setLastReportAt(statusPayload.lastReportAt);
-      setNotifications(notificationPayload);
     } catch (submitError) {
       setMessage(submitError instanceof Error ? submitError.message : "Unable to submit the report.");
     } finally {
@@ -115,7 +110,6 @@ function ArchitectReportsContent({ token, user }: { token: string; user: UserPro
         { href: "/architect/meetings", label: "Meetings" },
         { href: "/architect/reports", label: "Reports" },
       ]}
-      notifications={notifications}
       actions={
         <Link href="/projects" className="premium-button px-4 py-2 text-sm font-medium">
           Public portfolio

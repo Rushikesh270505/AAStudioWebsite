@@ -64,7 +64,6 @@ function ArchitectDashboardContent({ token, user }: { token: string; user: UserP
         { href: "/architect/meetings", label: "Meetings" },
         { href: "/architect/reports", label: "Reports" },
       ]}
-      notifications={payload?.notifications || []}
       actions={
         <Link href="/projects" className="premium-button px-4 py-2 text-sm font-medium">
           Public portfolio

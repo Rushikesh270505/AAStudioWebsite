@@ -22,16 +22,18 @@ export const adminNavItems = [
 export function AdminShell({
   title,
   description,
+  actions,
   children,
 }: {
   title: string;
   description?: string;
+  actions?: ReactNode;
   children: (session: SessionState) => ReactNode;
 }) {
   return (
     <ProtectedArea roles={["admin"]}>
       {({ token, user }) => (
-        <WorkspaceShell user={user} title={title} description={description} navItems={adminNavItems}>
+        <WorkspaceShell user={user} title={title} description={description} navItems={adminNavItems} actions={actions}>
           {children({ token, user })}
         </WorkspaceShell>
       )}

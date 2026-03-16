@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { fetchMeetings, fetchNotifications } from "@/lib/api";
+import { fetchMeetings } from "@/lib/api";
 import { MeetingCalendar } from "@/components/workspace/meeting-calendar";
 import { ProtectedArea } from "@/components/workspace/protected-area";
 import { WorkspaceShell } from "@/components/workspace/workspace-shell";
-import type { Meeting, NotificationItem, UserProfile } from "@/lib/platform-types";
+import type { Meeting, UserProfile } from "@/lib/platform-types";
 
 function toDayKey(value: string) {
   return new Date(value).toISOString().slice(0, 10);
@@ -14,7 +14,6 @@ function toDayKey(value: string) {
 
 function ClientMeetingsContent({ token, user }: { token: string; user: UserProfile }) {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [selectedDay, setSelectedDay] = useState(new Date().toISOString().slice(0, 10));
   const [error, setError] = useState("");
 
@@ -23,10 +22,9 @@ function ClientMeetingsContent({ token, user }: { token: string; user: UserProfi
 
     async function loadMeetings() {
       try {
-        const [meetingPayload, notificationPayload] = await Promise.all([fetchMeetings(token), fetchNotifications(token)]);
+        const meetingPayload = await fetchMeetings(token);
         if (!cancelled) {
           setMeetings(meetingPayload);
-          setNotifications(notificationPayload);
           setError("");
         }
       } catch (loadError) {
@@ -54,7 +52,6 @@ function ClientMeetingsContent({ token, user }: { token: string; user: UserProfi
         { href: "/client/dashboard", label: "Overview" },
         { href: "/client/meetings", label: "Meetings" },
       ]}
-      notifications={notifications}
       actions={
         <Link href="/contact" className="premium-button px-4 py-2 text-sm font-medium">
           New inquiry

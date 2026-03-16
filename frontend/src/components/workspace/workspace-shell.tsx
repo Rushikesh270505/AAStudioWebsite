@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, LogOut, Search } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useState } from "react";
 import { logoutCurrentUser } from "@/lib/api";
 import { clearSession, getStoredToken, getWorkspacePath } from "@/lib/auth";
-import type { NotificationItem, UserProfile } from "@/lib/platform-types";
+import type { UserProfile } from "@/lib/platform-types";
 import { cn } from "@/lib/utils";
 import { PresenceIndicator } from "@/components/workspace/presence-indicator";
 
@@ -20,7 +20,6 @@ export function WorkspaceShell({
   title,
   description,
   navItems,
-  notifications = [],
   actions,
   children,
 }: {
@@ -28,7 +27,6 @@ export function WorkspaceShell({
   title: string;
   description?: string;
   navItems: NavItem[];
-  notifications?: NotificationItem[];
   actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
@@ -120,19 +118,7 @@ export function WorkspaceShell({
               <h1 className="display-title mt-4 text-4xl md:text-5xl">{title}</h1>
               {description ? <p className="mt-3 max-w-3xl text-sm leading-7 text-[#5d5d5d]">{description}</p> : null}
             </div>
-            <div className="flex flex-col gap-3 md:items-end">
-              <div className="flex items-center gap-3">
-                <div className="glass-tab px-4 py-2 text-sm text-[#5d5d5d]">
-                  <Search size={16} />
-                  Search
-                </div>
-                <div className="glass-tab relative px-4 py-2 text-sm text-[#111111]">
-                  <Bell size={16} />
-                  {notifications.filter((item) => !item.read).length}
-                </div>
-              </div>
-              {actions}
-            </div>
+            {actions ? <div className="md:max-w-[420px] md:flex-1 md:self-stretch">{actions}</div> : null}
           </div>
 
           <div className="mt-6">{children}</div>
