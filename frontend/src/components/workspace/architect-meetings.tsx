@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { fetchMeetings } from "@/lib/api";
 import { architectNavItems } from "@/components/workspace/architect-nav";
@@ -50,11 +49,6 @@ function ArchitectMeetingsContent({ token, user }: { token: string; user: UserPr
       title="Architect meetings"
       description="Keep your calendar clear, join Google Meet sessions on time, and see every admin-scheduled discussion in one place."
       navItems={[...architectNavItems]}
-      actions={
-        <Link href="/projects" className="premium-button px-4 py-2 text-sm font-medium">
-          Public portfolio
-        </Link>
-      }
     >
       {error ? <div className="glass-panel rounded-[28px] p-6 text-sm text-[#8f6532]">{error}</div> : null}
 

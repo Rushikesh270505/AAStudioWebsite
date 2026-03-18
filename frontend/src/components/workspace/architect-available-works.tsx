@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { claimProject, fetchArchitectDashboard } from "@/lib/api";
@@ -150,11 +149,6 @@ function ArchitectAvailableWorksContent({ token, user }: { token: string; user: 
       title="Available works"
       description="Browse open studio commissions by service category, review each brief, and claim the works that align with your expertise."
       navItems={[...architectNavItems]}
-      actions={
-        <Link href="/projects" className="premium-button px-4 py-2 text-sm font-medium">
-          Public portfolio
-        </Link>
-      }
     >
       {error ? <div className="glass-panel rounded-[28px] p-6 text-sm text-[#8f6532]">{error}</div> : null}
 

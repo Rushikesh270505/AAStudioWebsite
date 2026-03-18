@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { createWorkReport, fetchArchitectReportStatus, fetchMyWorkReports } from "@/lib/api";
 import { architectNavItems } from "@/components/workspace/architect-nav";
@@ -107,11 +106,6 @@ function ArchitectReportsContent({ token, user }: { token: string; user: UserPro
       title="Architect reports"
       description="Submit what you completed today with image evidence. Admin sees these reports directly inside the workload section, and logout stays locked until a report is sent."
       navItems={[...architectNavItems]}
-      actions={
-        <Link href="/projects" className="premium-button px-4 py-2 text-sm font-medium">
-          Public portfolio
-        </Link>
-      }
     >
       {error ? <div className="glass-panel rounded-[28px] p-6 text-sm text-[#8f6532]">{error}</div> : null}
 

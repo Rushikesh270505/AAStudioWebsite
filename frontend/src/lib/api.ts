@@ -98,7 +98,7 @@ export function loginWithOtp(email: string, code: string) {
 }
 
 export function requestPasswordReset(email: string) {
-  return request<{ message: string }>("/auth/forgot-password", {
+  return request<OtpRequestResponse>("/auth/forgot-password", {
     method: "POST",
     body: JSON.stringify({ email }),
   });

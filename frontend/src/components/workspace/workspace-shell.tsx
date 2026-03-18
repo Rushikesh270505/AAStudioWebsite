@@ -41,6 +41,10 @@ function getNavIcon(label: string) {
     return BriefcaseBusiness;
   }
 
+  if (normalized.includes("project")) {
+    return FolderKanban;
+  }
+
   if (normalized.includes("staff")) {
     return Users;
   }

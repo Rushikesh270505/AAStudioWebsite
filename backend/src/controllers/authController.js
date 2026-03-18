@@ -239,10 +239,45 @@ async function forgotPassword(req, res) {
 
   const user = await User.findOne({ email });
 
+  if (!user) {
+    return res.json({
+      message: "If an account exists for that email, an OTP has been sent.",
+      channel: "email",
+      recipient: email,
+      expiresInMinutes: env.OTP_TTL_MINUTES,
+    });
+  }
+
+  await VerificationCode.deleteMany({
+    channel: "email",
+    recipient: email,
+    purpose: "login",
+  });
+
+  const code = generateOtpCode();
+  const expiresAt = new Date(Date.now() + env.OTP_TTL_MINUTES * 60 * 1000);
+
+  await VerificationCode.create({
+    channel: "email",
+    recipient: email,
+    purpose: "login",
+    code,
+    expiresAt,
+  });
+
+  const delivery = await deliverOtp({
+    channel: "email",
+    recipient: email,
+    code,
+    purpose: "reset",
+  });
+
   return res.json({
-    message: user
-      ? "Use the email OTP flow on the login form to sign in."
-      : "If an account exists for that email, you can request an OTP from the login form.",
+    message: "If an account exists for that email, an OTP has been sent.",
+    channel: "email",
+    recipient: email,
+    expiresInMinutes: env.OTP_TTL_MINUTES,
+    ...(delivery.debugCode ? { debugCode: delivery.debugCode } : {}),
   });
 }
 
@@ -303,6 +338,7 @@ async function requestOtp(req, res) {
     channel,
     recipient: normalizedRecipient,
     code,
+    purpose,
   });
 
   return res.json({

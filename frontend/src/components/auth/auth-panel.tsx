@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { generateAvatarSeed } from "@/lib/avatar";
 import { getWorkspacePath, saveSession } from "@/lib/auth";
-import { loginUser, loginWithOtp, registerUser, requestLoginOtp, requestSignupOtp, verifySignupOtp } from "@/lib/api";
+import { loginUser, loginWithOtp, registerUser, requestPasswordReset, requestSignupOtp, verifySignupOtp } from "@/lib/api";
 import { studioProjects } from "@/lib/site-data";
 
 type Mode = "login" | "signup";
@@ -181,7 +181,7 @@ export function AuthPanel() {
     setOtpPending(true);
 
     try {
-      const response = await requestLoginOtp(normalizedForgotEmail);
+      const response = await requestPasswordReset(normalizedForgotEmail);
       setForgotVerification({
         recipient: normalizedForgotEmail,
         requested: true,
