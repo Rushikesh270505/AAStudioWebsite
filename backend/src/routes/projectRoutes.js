@@ -4,6 +4,7 @@ const {
   getProject,
   getProjectBySlug,
   createProject,
+  updateProjectPortfolio,
   updateProjectStatus,
   assignProjectClient,
   claimProject,
@@ -22,6 +23,7 @@ router.get("/", listProjects);
 router.get("/slug/:slug", getProjectBySlug);
 router.get("/:id", protect, getProject);
 router.post("/", protect, authorize("architect", "admin"), createProject);
+router.patch("/:id/portfolio", protect, authorize("admin"), updateProjectPortfolio);
 router.patch("/:id/status", protect, authorize("architect", "admin"), updateProjectStatus);
 router.patch("/:id/assign", protect, authorize("admin"), assignProjectClient);
 router.post("/:id/claim", protect, authorize("architect"), claimProject);

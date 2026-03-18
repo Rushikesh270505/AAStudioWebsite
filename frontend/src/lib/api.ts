@@ -141,8 +141,15 @@ export function updateProfile(
   });
 }
 
-export function fetchProjects(search?: string) {
-  const query = search ? `?search=${encodeURIComponent(search)}` : "";
+export function fetchProjects(search?: string, options?: { publicOnly?: boolean }) {
+  const params = new URLSearchParams();
+  if (search) {
+    params.set("search", search);
+  }
+  if (options?.publicOnly) {
+    params.set("publicOnly", "true");
+  }
+  const query = params.toString() ? `?${params.toString()}` : "";
   return request<Project[]>(`/projects${query}`);
 }
 
@@ -163,6 +170,18 @@ export function fetchProjectBundle(token: string, projectId: string) {
 export function createProject(token: string, payload: Record<string, unknown>) {
   return request<ProjectBundle>("/projects", {
     method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateProjectPortfolio(
+  token: string,
+  projectId: string,
+  payload: { isVisible?: boolean; rows?: number; columns?: number },
+) {
+  return request<ProjectBundle>(`/projects/${projectId}/portfolio`, {
+    method: "PATCH",
     headers: authHeaders(token),
     body: JSON.stringify(payload),
   });

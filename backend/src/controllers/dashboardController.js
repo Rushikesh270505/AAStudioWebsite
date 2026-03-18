@@ -186,6 +186,11 @@ async function getAdminDashboard(req, res) {
     },
     reviewQueue: projects.filter((project) => project.status === "READY_FOR_REVIEW"),
     pendingWorks: projects.filter((project) => project.status === "PENDING"),
+    availableWorks: projects.filter(
+      (project) =>
+        project.status === "PENDING" &&
+        (!project.mainArchitect?._id || project.mainArchitect?._id?.toString?.() === ""),
+    ),
     inProgress: projects.filter((project) => ["IN_PROGRESS", "CHANGES_REQUESTED"].includes(project.status)),
     completed: projects.filter((project) => project.status === "COMPLETED"),
     projects: projects.map((project) => ({

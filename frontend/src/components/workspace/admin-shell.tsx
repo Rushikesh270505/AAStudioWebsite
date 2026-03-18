@@ -13,6 +13,8 @@ type SessionState = {
 export const adminNavItems = [
   { href: "/admin/dashboard", label: "Overview" },
   { href: "/admin/publish-work", label: "Publish Work" },
+  { href: "/admin/public-portfolio", label: "Public Portfolio" },
+  { href: "/admin/available-works", label: "Available Works" },
   { href: "/admin/staff", label: "Staff" },
   { href: "/admin/workload", label: "Workload" },
   { href: "/admin/meetings", label: "Meetings" },

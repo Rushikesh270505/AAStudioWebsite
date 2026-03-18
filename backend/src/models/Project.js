@@ -49,6 +49,28 @@ const quotationSchema = new mongoose.Schema(
   { _id: false },
 );
 
+const portfolioSchema = new mongoose.Schema(
+  {
+    isVisible: {
+      type: Boolean,
+      default: false,
+    },
+    rows: {
+      type: Number,
+      default: 1,
+      min: 1,
+      max: 3,
+    },
+    columns: {
+      type: Number,
+      default: 1,
+      min: 1,
+      max: 3,
+    },
+  },
+  { _id: false },
+);
+
 const projectSchema = new mongoose.Schema(
   {
     projectCode: {
@@ -136,6 +158,10 @@ const projectSchema = new mongoose.Schema(
       ref: "User",
     },
     latestReportAt: Date,
+    portfolio: {
+      type: portfolioSchema,
+      default: () => ({ isVisible: false, rows: 1, columns: 1 }),
+    },
     quotation: quotationSchema,
     paymentMilestones: [paymentMilestoneSchema],
     files: [

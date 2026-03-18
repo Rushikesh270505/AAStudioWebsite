@@ -1,40 +1,50 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { fetchArchitectDashboard } from "@/lib/api";
-import { architectNavItems } from "@/components/workspace/architect-nav";
+import { AdminShell } from "@/components/workspace/admin-shell";
 import { MetricCard } from "@/components/workspace/metric-card";
 import { ProjectListCard } from "@/components/workspace/project-list-card";
-import { ProtectedArea } from "@/components/workspace/protected-area";
-import { WorkspaceShell } from "@/components/workspace/workspace-shell";
+import { fetchAdminDashboard } from "@/lib/api";
 import { createCategoryId, getServiceCategory, serviceCategories } from "@/lib/service-categories";
 import { cn } from "@/lib/utils";
-import type { ArchitectDashboardPayload, Project, UserProfile } from "@/lib/platform-types";
+import type { AdminDashboardPayload } from "@/lib/platform-types";
 
-type ProjectCategoryTab = {
+type CategoryTab = {
   id: string;
   label: string;
   count: number;
 };
 
-function ArchitectMyProjectsContent({ token, user }: { token: string; user: UserProfile }) {
-  const [payload, setPayload] = useState<ArchitectDashboardPayload | null>(null);
+export function AdminAvailableWorks() {
+  return (
+    <AdminShell
+      title="Available works"
+      description="Verify what is currently pushed into the architect claim queue, inspect service coverage, and confirm that unassigned work is live."
+    >
+      {({ token }) => <AdminAvailableWorksContent token={token} />}
+    </AdminShell>
+  );
+}
+
+function AdminAvailableWorksContent({ token }: { token: string }) {
+  const [payload, setPayload] = useState<AdminDashboardPayload | null>(null);
   const [error, setError] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [currentTime] = useState(() => Date.now());
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadDashboard() {
       try {
-        const response = await fetchArchitectDashboard(token);
+        const adminPayload = await fetchAdminDashboard(token);
         if (!cancelled) {
-          setPayload(response);
+          setPayload(adminPayload);
           setError("");
         }
       } catch (loadError) {
         if (!cancelled) {
-          setError(loadError instanceof Error ? loadError.message : "Unable to load your projects.");
+          setError(loadError instanceof Error ? loadError.message : "Unable to load available works.");
         }
       }
     }
@@ -46,30 +56,16 @@ function ArchitectMyProjectsContent({ token, user }: { token: string; user: User
     };
   }, [token]);
 
-  const filteredProjects = useMemo(() => {
-    if (!payload) {
-      return [];
-    }
-
-    if (!selectedCategories.length) {
-      return payload.myProjects;
-    }
-
-    return payload.myProjects.filter((project) =>
-      selectedCategories.includes(createCategoryId(getServiceCategory(project))),
-    );
-  }, [payload, selectedCategories]);
-
-  const categoryTabs = useMemo<ProjectCategoryTab[]>(() => {
+  const categoryTabs = useMemo<CategoryTab[]>(() => {
     const groups = new Map<string, number>();
 
-    payload?.myProjects.forEach((project) => {
+    payload?.availableWorks.forEach((project) => {
       const label = getServiceCategory(project);
       groups.set(label, (groups.get(label) || 0) + 1);
     });
 
     return [
-      { id: "all", label: "All", count: payload?.myProjects.length || 0 },
+      { id: "all", label: "All", count: payload?.availableWorks.length || 0 },
       ...serviceCategories.map((label) => ({
         id: createCategoryId(label),
         label,
@@ -78,10 +74,40 @@ function ArchitectMyProjectsContent({ token, user }: { token: string; user: User
     ];
   }, [payload]);
 
+  const filteredWorks = useMemo(() => {
+    if (!payload) {
+      return [];
+    }
+
+    if (!selectedCategories.length) {
+      return payload.availableWorks;
+    }
+
+    return payload.availableWorks.filter((project) =>
+      selectedCategories.includes(createCategoryId(getServiceCategory(project))),
+    );
+  }, [payload, selectedCategories]);
+
   const selectedCategoryLabels = categoryTabs
     .filter((tab) => selectedCategories.includes(tab.id))
     .map((tab) => tab.label);
   const selectedCategorySummary = selectedCategoryLabels.length ? selectedCategoryLabels.join(", ") : "All";
+  const dueSoonCount = useMemo(() => {
+    if (!payload) {
+      return 0;
+    }
+
+    const weekInMs = 7 * 24 * 60 * 60 * 1000;
+
+    return payload.availableWorks.filter((project) => {
+      if (!project.deadline) {
+        return false;
+      }
+
+      const deadline = new Date(project.deadline).getTime();
+      return deadline >= currentTime && deadline - currentTime <= weekInMs;
+    }).length;
+  }, [currentTime, payload]);
 
   function handleCategoryToggle(categoryId: string) {
     if (categoryId === "all") {
@@ -95,12 +121,7 @@ function ArchitectMyProjectsContent({ token, user }: { token: string; user: User
   }
 
   return (
-    <WorkspaceShell
-      user={user}
-      title="My projects"
-      description="Everything you have already claimed or been assigned sits here, organized by current delivery stage."
-      navItems={[...architectNavItems]}
-    >
+    <div className="grid gap-6">
       {error ? <div className="glass-panel rounded-[28px] p-6 text-sm text-[#8f6532]">{error}</div> : null}
 
       {!payload ? (
@@ -110,12 +131,12 @@ function ArchitectMyProjectsContent({ token, user }: { token: string; user: User
           ))}
         </div>
       ) : (
-        <div className="grid gap-6">
+        <>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <MetricCard label="My projects" value={payload.myProjects.length} />
-            <MetricCard label="Ready for review" value={payload.readyForReview.length} />
-            <MetricCard label="Completed work" value={payload.completed.length} />
-            <MetricCard label="Overdue" value={payload.overdue.length} />
+            <MetricCard label="Available works" value={payload.availableWorks.length} hint="Currently visible to architects for claiming." />
+            <MetricCard label="Service categories" value={serviceCategories.length} hint="All service queues monitored here." />
+            <MetricCard label="Selected categories" value={selectedCategories.length || "All"} hint={`${filteredWorks.length} visible works`} />
+            <MetricCard label="Due this week" value={dueSoonCount} hint="Priority items nearing delivery dates." />
           </div>
 
           <div className="glass-panel rounded-[24px] p-3">
@@ -147,36 +168,28 @@ function ArchitectMyProjectsContent({ token, user }: { token: string; user: User
                 <p className="eyebrow">Selected services</p>
                 <h2 className="display-title mt-4 text-3xl">{selectedCategorySummary}</h2>
                 <p className="mt-2 text-sm leading-7 text-[#5d5d5d]">
-                  Filter the projects you already claimed or were assigned by service category, without leaving your project board.
+                  These are the unassigned projects that are already pushed into the live architect queue for the selected categories.
                 </p>
               </div>
               <span className="rounded-full border border-black/8 bg-white/72 px-4 py-2 text-xs uppercase tracking-[0.22em] text-[#8f6532]">
-                {filteredProjects.length} visible
+                {filteredWorks.length} pushed live
               </span>
             </div>
           </div>
 
           <div className="grid gap-4">
-            {filteredProjects.length ? (
-              filteredProjects.map((project: Project) => (
+            {filteredWorks.length ? (
+              filteredWorks.map((project) => (
                 <ProjectListCard key={project._id} project={project} href={`/projects/${project.slug}`} />
               ))
             ) : (
               <div className="glass-panel rounded-[28px] p-6 text-sm text-[#5d5d5d]">
-                No projects are available in this section yet.
+                No available works are currently pushed for the selected service categories.
               </div>
             )}
           </div>
-        </div>
+        </>
       )}
-    </WorkspaceShell>
-  );
-}
-
-export function ArchitectMyProjects() {
-  return (
-    <ProtectedArea roles={["architect"]}>
-      {({ token, user }) => <ArchitectMyProjectsContent token={token} user={user} />}
-    </ProtectedArea>
+    </div>
   );
 }

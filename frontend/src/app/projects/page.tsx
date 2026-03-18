@@ -1,6 +1,7 @@
 import { ProjectCard } from "@/components/project-card";
 import { SectionHeading } from "@/components/section-heading";
 import { fetchProjects } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 export const metadata = {
   title: "Projects",
@@ -8,8 +9,20 @@ export const metadata = {
 
 export const dynamic = "force-dynamic";
 
+const columnSpanMap = {
+  1: "lg:col-span-2",
+  2: "lg:col-span-4",
+  3: "lg:col-span-6",
+} as const;
+
+const rowSpanMap = {
+  1: "lg:row-span-1",
+  2: "lg:row-span-2",
+  3: "lg:row-span-3",
+} as const;
+
 export default async function ProjectsPage() {
-  const projects = await fetchProjects().catch(() => []);
+  const projects = await fetchProjects(undefined, { publicOnly: true }).catch(() => []);
 
   return (
     <>
@@ -26,9 +39,16 @@ export default async function ProjectsPage() {
       <section className="section-pad pt-0">
         <div className="container-shell">
           {projects.length ? (
-            <div className="grid gap-6 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:auto-rows-[minmax(180px,_auto)] lg:grid-cols-6">
               {projects.map((project) => (
-                <ProjectCard key={project.slug} project={project} />
+                <ProjectCard
+                  key={project.slug}
+                  project={project}
+                  className={cn(
+                    columnSpanMap[Math.min(3, Math.max(1, project.portfolio?.columns || 1)) as 1 | 2 | 3],
+                    rowSpanMap[Math.min(3, Math.max(1, project.portfolio?.rows || 1)) as 1 | 2 | 3],
+                  )}
+                />
               ))}
             </div>
           ) : (

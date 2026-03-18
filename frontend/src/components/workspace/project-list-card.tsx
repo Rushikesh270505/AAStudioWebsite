@@ -9,7 +9,7 @@ export function ProjectListCard({
   action,
 }: {
   project: Project;
-  href: string;
+  href?: string;
   action?: React.ReactNode;
 }) {
   return (
@@ -35,9 +35,11 @@ export function ProjectListCard({
 
         <div className="flex items-center gap-3">
           {action}
-          <Link href={href} className="premium-button px-4 py-2 text-sm font-medium">
-            Open
-          </Link>
+          {href ? (
+            <Link href={href} className="premium-button px-4 py-2 text-sm font-medium">
+              Open
+            </Link>
+          ) : null}
         </div>
       </div>
     </div>

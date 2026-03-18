@@ -10,7 +10,9 @@ import { principles, services, studioProjects, studioStats } from "@/lib/site-da
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const featuredProjects = await fetchProjects().then((projects) => projects.slice(0, 3)).catch(() => []);
+  const featuredProjects = await fetchProjects(undefined, { publicOnly: true })
+    .then((projects) => projects.slice(0, 3))
+    .catch(() => []);
 
   return (
     <>

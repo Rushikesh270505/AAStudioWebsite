@@ -18,6 +18,13 @@ const SERVICE_TYPES = [
   "Elevation Design",
   "Walkthrough Editing",
   "Cost and Estimation",
+  "Architectural Planning",
+  "Exterior Elevation Design",
+  "Landscape Design",
+  "Architectural Art & Decorative Design",
+  "3D Architectural Modeling",
+  "Walkthrough & Architectural Visualization",
+  "Architectural Media Editing",
 ];
 const UPDATE_TYPES = [
   "DAILY_REPORT",

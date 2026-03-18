@@ -5,13 +5,20 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Project } from "@/lib/platform-types";
+import { cn } from "@/lib/utils";
 
-export function ProjectCard({ project }: { project: Project }) {
+export function ProjectCard({
+  project,
+  className,
+}: {
+  project: Project;
+  className?: string;
+}) {
   return (
     <motion.article
       whileHover={{ y: -8 }}
       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-      className="glass-panel overflow-hidden rounded-[32px]"
+      className={cn("glass-panel flex h-full flex-col overflow-hidden rounded-[32px]", className)}
     >
       <div className="relative h-72 overflow-hidden">
         {project.heroImage ? (
@@ -39,7 +46,7 @@ export function ProjectCard({ project }: { project: Project }) {
           </span>
         </div>
       </div>
-      <div className="p-6">
+      <div className="flex flex-1 flex-col p-6">
         <p className="text-sm leading-7 text-[#5d5d5d]">{project.summary}</p>
         <div className="mt-6 flex items-center justify-between">
           <div className="text-xs uppercase tracking-[0.24em] text-[#8f6532]">

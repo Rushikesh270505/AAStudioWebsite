@@ -8,53 +8,15 @@ import { architectNavItems } from "@/components/workspace/architect-nav";
 import { MetricCard } from "@/components/workspace/metric-card";
 import { ProtectedArea } from "@/components/workspace/protected-area";
 import { WorkspaceShell } from "@/components/workspace/workspace-shell";
+import { createCategoryId, getServiceCategory, serviceCategories } from "@/lib/service-categories";
 import { cn } from "@/lib/utils";
 import type { ArchitectDashboardPayload, Project, UserProfile } from "@/lib/platform-types";
-
-const serviceCategories = [
-  "Architectural Planning",
-  "Exterior Elevation Design",
-  "Interior Design",
-  "Landscape Design",
-  "Architectural Art & Decorative Design",
-  "3D Architectural Modeling",
-  "Walkthrough & Architectural Visualization",
-  "Architectural Media Editing",
-] as const;
 
 type WorkCategoryTab = {
   id: string;
   label: string;
   count: number;
 };
-
-const serviceCategoryMap: Record<string, string> = {
-  "planning residential": "Architectural Planning",
-  "planning commercial": "Architectural Planning",
-  "cost and estimation": "Architectural Planning",
-  "exterior design": "Exterior Elevation Design",
-  "elevation design": "Exterior Elevation Design",
-  "interior design": "Interior Design",
-  "furniture design": "Interior Design",
-  "landscape design": "Landscape Design",
-  "architectural art & decorative design": "Architectural Art & Decorative Design",
-  "decorative design": "Architectural Art & Decorative Design",
-  "3d renders": "3D Architectural Modeling",
-  "3d architectural modeling": "3D Architectural Modeling",
-  walkthrough: "Walkthrough & Architectural Visualization",
-  "walkthrough & architectural visualization": "Walkthrough & Architectural Visualization",
-  "walkthrough editing": "Architectural Media Editing",
-  "architectural media editing": "Architectural Media Editing",
-};
-
-function getWorkCategory(project: Project) {
-  const source = String(project.serviceType || project.category || project.projectType || "").trim().toLowerCase();
-  return serviceCategoryMap[source] || "Architectural Planning";
-}
-
-function createCategoryId(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-}
 
 function AvailableWorkCard({
   project,
@@ -145,7 +107,7 @@ function ArchitectAvailableWorksContent({ token, user }: { token: string; user: 
     const groups = new Map<string, number>();
 
     payload?.availableWorks.forEach((project) => {
-      const label = getWorkCategory(project);
+      const label = getServiceCategory(project);
       groups.set(label, (groups.get(label) || 0) + 1);
     });
 
@@ -189,7 +151,7 @@ function ArchitectAvailableWorksContent({ token, user }: { token: string; user: 
     }
 
     return payload.availableWorks.filter((project) =>
-      selectedCategories.includes(createCategoryId(getWorkCategory(project))),
+      selectedCategories.includes(createCategoryId(getServiceCategory(project))),
     );
   }, [payload, selectedCategories]);
 
@@ -262,20 +224,20 @@ function ArchitectAvailableWorksContent({ token, user }: { token: string; user: 
           </div>
 
           <div className="glass-panel sticky top-4 z-20 rounded-[24px] p-3 backdrop-blur-xl">
-            <div className="flex gap-2 overflow-x-auto pb-1">
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
               {categoryTabs.map((tab) => (
                 <button
                   key={tab.id}
                   type="button"
                   onClick={() => handleCategoryToggle(tab.id)}
                   className={cn(
-                    "glass-tab inline-flex items-center gap-3 rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em] whitespace-nowrap transition",
+                    "glass-tab flex min-w-0 w-full items-center justify-between gap-3 rounded-full px-4 py-3 text-xs uppercase tracking-[0.2em] transition",
                     (tab.id === "all" && !selectedCategories.length) || selectedCategories.includes(tab.id)
                       ? "border-[#c8a97e]/70 bg-white/90 text-[#2C2C2C] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_12px_24px_rgba(45,45,45,0.08)]"
                       : "text-[#5d5d5d] hover:border-[#c8a97e]/60 hover:text-[#2C2C2C]",
                   )}
                 >
-                  <span>{tab.label}</span>
+                  <span className="min-w-0 break-words pr-2 text-left leading-5">{tab.label}</span>
                   <span className="rounded-full border border-black/8 bg-white/70 px-2 py-1 text-[10px] tracking-[0.18em] text-[#8f6532]">
                     {tab.count}
                   </span>
@@ -305,7 +267,7 @@ function ArchitectAvailableWorksContent({ token, user }: { token: string; user: 
                 <AvailableWorkCard
                   key={project._id}
                   project={project}
-                  categoryLabel={getWorkCategory(project)}
+                  categoryLabel={getServiceCategory(project)}
                   busy={busyProjectId === project._id}
                   onClaim={() => handleClaim(project._id)}
                 />

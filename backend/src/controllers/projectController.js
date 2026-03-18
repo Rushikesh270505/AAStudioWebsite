@@ -93,6 +93,14 @@ function buildSearchQuery(search) {
   };
 }
 
+function normalizePortfolio(portfolio) {
+  return {
+    isVisible: Boolean(portfolio?.isVisible),
+    rows: Math.min(3, Math.max(1, Number(portfolio?.rows) || 1)),
+    columns: Math.min(3, Math.max(1, Number(portfolio?.columns) || 1)),
+  };
+}
+
 async function loadCollaboratorIds(projectId) {
   const collaborators = await ProjectCollaborator.find({ project: projectId }).select("architect");
   return collaborators.map((item) => item.architect.toString());
@@ -144,6 +152,10 @@ async function listProjects(req, res) {
     query.priority = req.query.priority;
   }
 
+  if (req.query.publicOnly === "true") {
+    query["portfolio.isVisible"] = true;
+  }
+
   const projects = await withProjectPopulate(Project.find(query).sort({ createdAt: -1 }));
   return res.json(
     projects.map((project) => ({
@@ -171,7 +183,7 @@ async function getProject(req, res) {
 async function getProjectBySlug(req, res) {
   const project = await withProjectPopulate(Project.findOne({ slug: req.params.slug }));
 
-  if (!project) {
+  if (!project || !project.portfolio?.isVisible) {
     return res.status(404).json({ message: "Project not found." });
   }
 
@@ -221,6 +233,7 @@ async function createProject(req, res) {
     quotation,
     paymentMilestones,
     tags,
+    portfolio,
   } = req.body;
 
   const slugBase = slugify(title);
@@ -258,6 +271,7 @@ async function createProject(req, res) {
     createdByAdmin: req.user.role === "admin" ? req.user._id : undefined,
     tags: Array.isArray(tags) ? tags : [],
     latestReportAt: initialStatus === "IN_PROGRESS" ? new Date() : undefined,
+    portfolio: normalizePortfolio(portfolio),
   });
 
   if (clientId) {
@@ -288,6 +302,29 @@ async function createProject(req, res) {
   );
 
   return res.status(201).json(await fetchProjectBundle(project._id));
+}
+
+async function updateProjectPortfolio(req, res) {
+  const project = await Project.findById(req.params.id);
+
+  if (!project) {
+    return res.status(404).json({ message: "Project not found." });
+  }
+
+  project.portfolio = normalizePortfolio({
+    ...(project.portfolio?.toObject ? project.portfolio.toObject() : project.portfolio),
+    ...req.body,
+  });
+
+  await project.save();
+  await logAudit({
+    action: "PROJECT_PORTFOLIO_UPDATED",
+    actor: req.user._id,
+    project: project._id,
+    metadata: { portfolio: project.portfolio },
+  });
+
+  return res.json(await fetchProjectBundle(project._id));
 }
 
 async function updateProjectStatus(req, res) {
@@ -706,6 +743,7 @@ module.exports = {
   getProject,
   getProjectBySlug,
   createProject,
+  updateProjectPortfolio,
   updateProjectStatus,
   assignProjectClient,
   claimProject,

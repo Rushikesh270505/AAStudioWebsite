@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { fetchArchitectDashboard } from "@/lib/api";
 import { architectNavItems } from "@/components/workspace/architect-nav";
@@ -10,6 +11,7 @@ import { WorkspaceShell } from "@/components/workspace/workspace-shell";
 import type { ArchitectDashboardPayload, UserProfile } from "@/lib/platform-types";
 
 function ArchitectDashboardContent({ token, user }: { token: string; user: UserProfile }) {
+  const router = useRouter();
   const [payload, setPayload] = useState<ArchitectDashboardPayload | null>(null);
   const [error, setError] = useState("");
 
@@ -55,10 +57,30 @@ function ArchitectDashboardContent({ token, user }: { token: string; user: UserP
       ) : (
         <div className="grid gap-6">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <MetricCard label="My projects" value={payload.overview.activeCount} />
-            <MetricCard label="Ready for review" value={payload.overview.reviewCount} />
-            <MetricCard label="Overdue" value={payload.overview.overdueCount} />
-            <MetricCard label="Completed work" value={payload.completed.length} />
+            <MetricCard
+              label="My projects"
+              value={payload.overview.activeCount}
+              hint="Open the projects you already own."
+              onClick={() => router.push("/architect/my-projects")}
+            />
+            <MetricCard
+              label="Available works"
+              value={payload.availableWorks.length}
+              hint="Browse work that can be claimed."
+              onClick={() => router.push("/architect/available-works")}
+            />
+            <MetricCard
+              label="Meetings"
+              value={payload.meetings.length + payload.siteVisits.length}
+              hint="Check the current schedule."
+              onClick={() => router.push("/architect/meetings")}
+            />
+            <MetricCard
+              label="Reports"
+              value={payload.readyForReview.length}
+              hint="Open reports and review-ready work."
+              onClick={() => router.push("/architect/reports")}
+            />
           </div>
 
           <div className="glass-panel rounded-[30px] p-6 md:p-8">
@@ -67,7 +89,7 @@ function ArchitectDashboardContent({ token, user }: { token: string; user: UserP
               <div>
                 <h2 className="display-title text-3xl">Keep this dashboard lean.</h2>
                 <p className="mt-3 max-w-2xl text-sm leading-7 text-[#5d5d5d]">
-                  The detailed work now lives in dedicated sections. Use this page as a clean overview, then move into the exact workspace you need.
+                  Use this page as a quick index. Open the exact section you need instead of working from one mixed board.
                 </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
@@ -96,31 +118,6 @@ function ArchitectDashboardContent({ token, user }: { token: string; user: UserP
                   </p>
                 </Link>
               </div>
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="glass-panel rounded-[28px] p-5">
-              <p className="eyebrow">Due soon</p>
-              <p className="mt-4 text-sm leading-7 text-[#5d5d5d]">
-                {payload.dueSoon.length
-                  ? `${payload.dueSoon.length} project${payload.dueSoon.length > 1 ? "s are" : " is"} due within the next week.`
-                  : "Nothing is due within the next week."}
-              </p>
-            </div>
-            <div className="glass-panel rounded-[28px] p-5">
-              <p className="eyebrow">Upcoming meetings</p>
-              <p className="mt-4 text-sm leading-7 text-[#5d5d5d]">
-                {[...payload.meetings, ...payload.siteVisits].length
-                  ? `${[...payload.meetings, ...payload.siteVisits].length} scheduled item${[...payload.meetings, ...payload.siteVisits].length > 1 ? "s" : ""} waiting in your meetings section.`
-                  : "No meetings or site visits are scheduled yet."}
-              </p>
-            </div>
-            <div className="glass-panel rounded-[28px] p-5">
-              <p className="eyebrow">Daily reporting</p>
-              <p className="mt-4 text-sm leading-7 text-[#5d5d5d]">
-                Use the reports section to submit your work summary and image evidence before signing out.
-              </p>
             </div>
           </div>
         </div>

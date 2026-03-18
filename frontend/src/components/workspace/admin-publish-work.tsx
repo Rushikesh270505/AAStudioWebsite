@@ -4,21 +4,10 @@ import { FormEvent, useEffect, useState } from "react";
 import { AdminShell } from "@/components/workspace/admin-shell";
 import { MetricCard } from "@/components/workspace/metric-card";
 import { ProjectListCard } from "@/components/workspace/project-list-card";
+import { createCategoryId, serviceCategories } from "@/lib/service-categories";
+import { cn } from "@/lib/utils";
 import { createProject, fetchAdminDashboard } from "@/lib/api";
 import type { AdminDashboardPayload } from "@/lib/platform-types";
-
-const serviceTypes = [
-  "Walkthrough",
-  "3D Renders",
-  "Interior Design",
-  "Exterior Design",
-  "Furniture Design",
-  "Planning Commercial",
-  "Planning Residential",
-  "Elevation Design",
-  "Walkthrough Editing",
-  "Cost and Estimation",
-];
 
 const projectStatuses = ["PENDING", "IN_PROGRESS", "READY_FOR_REVIEW", "CHANGES_REQUESTED", "COMPLETED"];
 const projectPriorities = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
@@ -44,7 +33,7 @@ const initialForm: PublishFormState = {
   title: "",
   location: "",
   projectType: "",
-  serviceType: "Planning Residential",
+  serviceType: serviceCategories[0],
   summary: "",
   description: "",
   status: "PENDING",
@@ -172,17 +161,36 @@ function PublishWorkContent({ token }: { token: string }) {
                 placeholder="Project type"
                 className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none focus:border-[#c8a97e]"
               />
-              <select
-                value={form.serviceType}
-                onChange={(event) => setForm((current) => ({ ...current, serviceType: event.target.value }))}
-                className="rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none focus:border-[#c8a97e]"
-              >
-                {serviceTypes.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
+              <div className="rounded-[24px] border border-black/10 bg-white/70 px-4 py-3">
+                <p className="text-[11px] uppercase tracking-[0.24em] text-[#8f6532]">Available works category</p>
+                <p className="mt-2 text-sm text-[#5d5d5d]">
+                  Choose which service category this work should appear under in the architect queue.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {serviceCategories.map((item) => {
+                const isSelected = form.serviceType === item;
+                return (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setForm((current) => ({ ...current, serviceType: item }))}
+                    className={cn(
+                      "glass-tab flex min-h-[58px] items-center justify-between gap-3 rounded-[22px] px-4 py-3 text-left text-xs uppercase tracking-[0.18em] transition",
+                      isSelected
+                        ? "border-[#c8a97e]/70 bg-white/92 text-[#2C2C2C] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_14px_28px_rgba(45,45,45,0.08)]"
+                        : "text-[#6a645b] hover:border-[#c8a97e]/55 hover:text-[#2C2C2C]",
+                    )}
+                  >
+                    <span className="min-w-0 break-words leading-5">{item}</span>
+                    <span className="rounded-full border border-black/8 bg-white/72 px-2 py-1 text-[10px] tracking-[0.18em] text-[#8f6532]">
+                      {createCategoryId(item).slice(0, 3).toUpperCase()}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             <div className="grid gap-3 md:grid-cols-2">
@@ -275,6 +283,9 @@ function PublishWorkContent({ token }: { token: string }) {
             </button>
           </form>
           {message ? <p className="mt-4 text-sm leading-7 text-[#5d5d5d]">{message}</p> : null}
+          <p className="mt-3 text-xs uppercase tracking-[0.2em] text-[#8f6532]">
+            Public portfolio visibility and layout are managed separately in the Public Portfolio section.
+          </p>
         </section>
 
         <section className="grid gap-4">
@@ -288,7 +299,11 @@ function PublishWorkContent({ token }: { token: string }) {
 
           {payload?.projects.length ? (
             payload.projects.slice(0, 5).map((project) => (
-              <ProjectListCard key={project._id} project={project} href={`/projects/${project.slug}`} />
+              <ProjectListCard
+                key={project._id}
+                project={project}
+                href={project.portfolio?.isVisible ? `/projects/${project.slug}` : undefined}
+              />
             ))
           ) : (
             <div className="glass-panel rounded-[30px] p-6 text-sm text-[#5d5d5d]">No projects have been published yet.</div>

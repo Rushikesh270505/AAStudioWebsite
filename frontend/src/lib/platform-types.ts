@@ -70,6 +70,11 @@ export type Project = {
     currency?: string;
     summary?: string;
   };
+  portfolio?: {
+    isVisible: boolean;
+    rows: number;
+    columns: number;
+  };
   paymentMilestones?: PaymentMilestone[];
   client?: UserProfile;
   architect?: UserProfile;
@@ -289,6 +294,7 @@ export type AdminDashboardPayload = {
   };
   reviewQueue: Project[];
   pendingWorks: Project[];
+  availableWorks: Project[];
   inProgress: Project[];
   completed: Project[];
   projects: Project[];
