@@ -1,12 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { fetchArchitectDashboard } from "@/lib/api";
 import { architectNavItems } from "@/components/workspace/architect-nav";
 import { MetricCard } from "@/components/workspace/metric-card";
-import { ProjectListCard } from "@/components/workspace/project-list-card";
 import { ProtectedArea } from "@/components/workspace/protected-area";
-import { UpdateFeed } from "@/components/workspace/update-feed";
 import { WorkspaceShell } from "@/components/workspace/workspace-shell";
 import type { ArchitectDashboardPayload, UserProfile } from "@/lib/platform-types";
 
@@ -49,8 +48,8 @@ function ArchitectDashboardContent({ token, user }: { token: string; user: UserP
 
       {!payload ? (
         <div className="grid gap-4 md:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <div key={index} className="glass-panel h-32 animate-pulse rounded-[28px]" />
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="glass-panel h-28 animate-pulse rounded-[28px]" />
           ))}
         </div>
       ) : (
@@ -62,118 +61,66 @@ function ArchitectDashboardContent({ token, user }: { token: string; user: UserP
             <MetricCard label="Completed work" value={payload.completed.length} />
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-[0.56fr_0.44fr]">
-            <div className="grid gap-4">
+          <div className="glass-panel rounded-[30px] p-6 md:p-8">
+            <p className="eyebrow">Workspace focus</p>
+            <div className="mt-4 grid gap-4 xl:grid-cols-[0.48fr_0.52fr]">
               <div>
-                <h2 className="display-title text-3xl">My projects</h2>
+                <h2 className="display-title text-3xl">Keep this dashboard lean.</h2>
+                <p className="mt-3 max-w-2xl text-sm leading-7 text-[#5d5d5d]">
+                  The detailed work now lives in dedicated sections. Use this page as a clean overview, then move into the exact workspace you need.
+                </p>
               </div>
-              {payload.myProjects.length ? (
-                payload.myProjects.map((project) => (
-                  <ProjectListCard key={project._id} project={project} href={`/projects/${project.slug}`} />
-                ))
-              ) : (
-                <div className="glass-panel rounded-[28px] p-6 text-sm text-[#5d5d5d]">
-                  You have not claimed or been assigned any projects yet.
-                </div>
-              )}
-            </div>
-
-            <div className="grid gap-4">
-              <div className="glass-panel rounded-[28px] p-6">
-                <p className="eyebrow">Due soon</p>
-                <div className="mt-5 grid gap-3">
-                  {payload.dueSoon.length ? (
-                    payload.dueSoon.map((project) => (
-                      <div key={project._id} className="rounded-[22px] border border-black/8 bg-white/65 p-4">
-                        <p className="font-medium text-[#111111]">{project.title}</p>
-                        <p className="mt-2 text-sm text-[#5d5d5d]">
-                          {project.deadline ? new Date(project.deadline).toLocaleDateString() : "Deadline pending"}
-                        </p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-[#5d5d5d]">Nothing due within the next week.</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="glass-panel rounded-[28px] p-6">
-                <p className="eyebrow">Upcoming meetings and visits</p>
-                <div className="mt-5 grid gap-3">
-                  {[...payload.meetings, ...payload.siteVisits].slice(0, 6).map((item) => (
-                    <div key={item._id} className="rounded-[22px] border border-black/8 bg-white/65 p-4">
-                      <p className="font-medium text-[#111111]">
-                        {"title" in item ? item.title : item.location}
-                      </p>
-                      <p className="mt-2 text-sm text-[#5d5d5d]">
-                        {"scheduledAt" in item
-                          ? new Date(item.scheduledAt).toLocaleString()
-                          : new Date(item.date).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))}
-                  {!payload.meetings.length && !payload.siteVisits.length ? (
-                    <p className="text-sm text-[#5d5d5d]">No meetings or visits are scheduled yet.</p>
-                  ) : null}
-                </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Link href="/architect/my-projects" className="glass-panel rounded-[24px] p-5 transition hover:-translate-y-0.5 hover:border-[#c8a97e]/55">
+                  <p className="eyebrow">My Projects</p>
+                  <p className="mt-3 text-sm leading-7 text-[#5d5d5d]">
+                    View only the projects you have already claimed or been assigned.
+                  </p>
+                </Link>
+                <Link href="/architect/available-works" className="glass-panel rounded-[24px] p-5 transition hover:-translate-y-0.5 hover:border-[#c8a97e]/55">
+                  <p className="eyebrow">Available Works</p>
+                  <p className="mt-3 text-sm leading-7 text-[#5d5d5d]">
+                    Browse category-wise open work and claim only what fits your capacity.
+                  </p>
+                </Link>
+                <Link href="/architect/meetings" className="glass-panel rounded-[24px] p-5 transition hover:-translate-y-0.5 hover:border-[#c8a97e]/55">
+                  <p className="eyebrow">Meetings</p>
+                  <p className="mt-3 text-sm leading-7 text-[#5d5d5d]">
+                    Check meeting schedules, Google Meet links, and the current calendar.
+                  </p>
+                </Link>
+                <Link href="/architect/reports" className="glass-panel rounded-[24px] p-5 transition hover:-translate-y-0.5 hover:border-[#c8a97e]/55">
+                  <p className="eyebrow">Reports</p>
+                  <p className="mt-3 text-sm leading-7 text-[#5d5d5d]">
+                    Submit your daily report with images so admin can review your progress.
+                  </p>
+                </Link>
               </div>
             </div>
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-[0.56fr_0.44fr]">
-            <div className="grid gap-4">
-              <div>
-                <h2 className="display-title text-3xl">Latest updates</h2>
-              </div>
-              <UpdateFeed updates={payload.updates} emptyLabel="No architect updates are available yet." />
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="glass-panel rounded-[28px] p-5">
+              <p className="eyebrow">Due soon</p>
+              <p className="mt-4 text-sm leading-7 text-[#5d5d5d]">
+                {payload.dueSoon.length
+                  ? `${payload.dueSoon.length} project${payload.dueSoon.length > 1 ? "s are" : " is"} due within the next week.`
+                  : "Nothing is due within the next week."}
+              </p>
             </div>
-
-            <div className="glass-panel rounded-[28px] p-6">
-              <p className="eyebrow">Current workload</p>
-              <div className="mt-5 grid gap-3">
-                <div className="rounded-[22px] border border-black/8 bg-white/65 p-4">
-                  <p className="text-sm uppercase tracking-[0.2em] text-[#8f6532]">Claimed projects</p>
-                  <p className="mt-3 text-3xl font-semibold text-[#111111]">{payload.myProjects.length}</p>
-                </div>
-                <div className="rounded-[22px] border border-black/8 bg-white/65 p-4">
-                  <p className="text-sm uppercase tracking-[0.2em] text-[#8f6532]">Review-ready submissions</p>
-                  <p className="mt-3 text-3xl font-semibold text-[#111111]">{payload.readyForReview.length}</p>
-                </div>
-              </div>
+            <div className="glass-panel rounded-[28px] p-5">
+              <p className="eyebrow">Upcoming meetings</p>
+              <p className="mt-4 text-sm leading-7 text-[#5d5d5d]">
+                {[...payload.meetings, ...payload.siteVisits].length
+                  ? `${[...payload.meetings, ...payload.siteVisits].length} scheduled item${[...payload.meetings, ...payload.siteVisits].length > 1 ? "s" : ""} waiting in your meetings section.`
+                  : "No meetings or site visits are scheduled yet."}
+              </p>
             </div>
-          </div>
-
-          <div className="grid gap-6 xl:grid-cols-[0.5fr_0.5fr]">
-            <div className="glass-panel rounded-[28px] border border-white/50 p-6 shadow-[0_20px_50px_rgba(17,17,17,0.05)]">
-              <p className="eyebrow">Ready for review</p>
-              <div className="mt-5 grid gap-3">
-                {payload.readyForReview.length ? (
-                  payload.readyForReview.map((project) => (
-                    <div key={project._id} className="rounded-[22px] border border-black/8 bg-white/65 p-4">
-                      <p className="font-medium text-[#111111]">{project.title}</p>
-                      <p className="mt-2 text-sm text-[#5d5d5d]">{project.location}</p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-[#5d5d5d]">Nothing is waiting for review approval right now.</p>
-                )}
-              </div>
-            </div>
-
-            <div className="glass-panel rounded-[28px] border border-white/50 p-6 shadow-[0_20px_50px_rgba(17,17,17,0.05)]">
-              <p className="eyebrow">Completed work</p>
-              <div className="mt-5 grid gap-3">
-                {payload.completed.length ? (
-                  payload.completed.slice(0, 5).map((project) => (
-                    <div key={project._id} className="rounded-[22px] border border-black/8 bg-white/65 p-4">
-                      <p className="font-medium text-[#111111]">{project.title}</p>
-                      <p className="mt-2 text-sm text-[#5d5d5d]">{project.location}</p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-[#5d5d5d]">Completed projects will appear here once they close out.</p>
-                )}
-              </div>
+            <div className="glass-panel rounded-[28px] p-5">
+              <p className="eyebrow">Daily reporting</p>
+              <p className="mt-4 text-sm leading-7 text-[#5d5d5d]">
+                Use the reports section to submit your work summary and image evidence before signing out.
+              </p>
             </div>
           </div>
         </div>

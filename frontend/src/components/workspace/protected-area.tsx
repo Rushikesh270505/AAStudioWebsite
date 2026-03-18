@@ -19,9 +19,18 @@ export function ProtectedArea({
 }) {
   const router = useRouter();
   const session = useSyncExternalStore(subscribeToSession, readSessionSnapshot, getEmptySessionSnapshot);
+  const hydrated = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false,
+  );
   const hasAccess = Boolean(session.token && session.user && roles.includes(session.user.role));
 
   useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
     if (!session.token || !session.user) {
       router.replace("/auth");
       return;
@@ -30,9 +39,9 @@ export function ProtectedArea({
     if (!roles.includes(session.user.role)) {
       router.replace("/auth");
     }
-  }, [roles, router, session.token, session.user]);
+  }, [hydrated, roles, router, session.token, session.user]);
 
-  if (!hasAccess || !session.user) {
+  if (!hydrated || !hasAccess || !session.user) {
     return (
       <section className="section-pad">
         <div className="container-shell grid gap-4 md:grid-cols-3">

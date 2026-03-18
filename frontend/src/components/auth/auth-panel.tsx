@@ -3,9 +3,16 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { generateAvatarSeed } from "@/lib/avatar";
-import { getWorkspacePath, saveSession } from "@/lib/auth";
+import {
+  getEmptySessionSnapshot,
+  getWorkspacePath,
+  readSessionSnapshot,
+  saveSession,
+  subscribeToSession,
+} from "@/lib/auth";
 import { loginUser, loginWithOtp, registerUser, requestPasswordReset, requestSignupOtp, verifySignupOtp } from "@/lib/api";
 import { studioProjects } from "@/lib/site-data";
+import { useSyncExternalStore } from "react";
 
 type Mode = "login" | "signup";
 
@@ -37,6 +44,7 @@ function buildDefaultMessage(mode: Mode) {
 
 export function AuthPanel() {
   const router = useRouter();
+  const session = useSyncExternalStore(subscribeToSession, readSessionSnapshot, getEmptySessionSnapshot);
   const [mode, setMode] = useState<Mode>("login");
   const [identifier, setIdentifier] = useState("");
   const [username, setUsername] = useState("");
@@ -61,6 +69,12 @@ export function AuthPanel() {
   const signupReady = emailVerification.verified;
   const showcaseProject = studioProjects[1];
   const signupAvatarSeed = generateAvatarSeed(normalizedUsername || normalizedEmail || "guest");
+
+  useEffect(() => {
+    if (session.token && session.user) {
+      router.replace(getWorkspacePath(session.user.role));
+    }
+  }, [router, session.token, session.user]);
 
   useEffect(() => {
     setMessage(buildDefaultMessage(mode));

@@ -17,6 +17,7 @@ export const adminNavItems = [
   { href: "/admin/workload", label: "Workload" },
   { href: "/admin/meetings", label: "Meetings" },
   { href: "/admin/inquiries", label: "Inquiries" },
+  { href: "/admin/faq", label: "FAQ" },
 ];
 
 export function AdminShell({

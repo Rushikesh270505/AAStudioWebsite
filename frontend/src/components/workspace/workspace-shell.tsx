@@ -7,6 +7,7 @@ import {
   ArrowRight,
   BriefcaseBusiness,
   CalendarDays,
+  CircleHelp,
   FileSpreadsheet,
   FolderKanban,
   LayoutDashboard,
@@ -59,6 +60,10 @@ function getNavIcon(label: string) {
 
   if (normalized.includes("inquir")) {
     return ShieldCheck;
+  }
+
+  if (normalized.includes("faq")) {
+    return CircleHelp;
   }
 
   if (normalized.includes("report")) {
