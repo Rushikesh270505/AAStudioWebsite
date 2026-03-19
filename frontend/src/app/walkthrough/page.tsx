@@ -11,9 +11,9 @@ export default function WalkthroughPage() {
       <section className="section-pad">
         <div className="container-shell">
           <SectionHeading
-            eyebrow="Interactive walkthrough"
-            title="Explore the project in first person before construction begins"
-            description="The walkthrough engine combines browser controls, lighting, and collision logic to give clients and teams an intuitive sense of scale and circulation."
+            eyebrow="Luxury residence walkthrough"
+            title="Explore a bespoke 3BHK interior in a playable first-person experience"
+            description="A warm, polished residential walkthrough with layered bedrooms, living, dining, and bath spaces lets clients experience the atmosphere before execution."
           />
           <div className="mt-10">
             <WalkthroughExperience />
