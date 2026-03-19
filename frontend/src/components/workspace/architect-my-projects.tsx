@@ -3,11 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchArchitectDashboard } from "@/lib/api";
 import { architectNavItems } from "@/components/workspace/architect-nav";
-import { MetricCard } from "@/components/workspace/metric-card";
 import { ProjectListCard } from "@/components/workspace/project-list-card";
 import { ProtectedArea } from "@/components/workspace/protected-area";
 import { WorkspaceShell } from "@/components/workspace/workspace-shell";
-import { createCategoryId, getServiceCategory, serviceCategories } from "@/lib/service-categories";
+import { createCategoryId, getServiceCategory } from "@/lib/service-categories";
 import { cn } from "@/lib/utils";
 import type { ArchitectDashboardPayload, Project, UserProfile } from "@/lib/platform-types";
 
@@ -68,20 +67,17 @@ function ArchitectMyProjectsContent({ token, user }: { token: string; user: User
       groups.set(label, (groups.get(label) || 0) + 1);
     });
 
+    const presentCategories = Array.from(groups.keys());
+
     return [
       { id: "all", label: "All", count: payload?.myProjects.length || 0 },
-      ...serviceCategories.map((label) => ({
+      ...presentCategories.map((label) => ({
         id: createCategoryId(label),
         label,
         count: groups.get(label) || 0,
       })),
     ];
   }, [payload]);
-
-  const selectedCategoryLabels = categoryTabs
-    .filter((tab) => selectedCategories.includes(tab.id))
-    .map((tab) => tab.label);
-  const selectedCategorySummary = selectedCategoryLabels.length ? selectedCategoryLabels.join(", ") : "All";
 
   function handleCategoryToggle(categoryId: string) {
     if (categoryId === "all") {
@@ -98,7 +94,29 @@ function ArchitectMyProjectsContent({ token, user }: { token: string; user: User
     <WorkspaceShell
       user={user}
       title="My projects"
-      description="Everything you have already claimed or been assigned sits here, organized by current delivery stage."
+      description="Use this board to open only the work you already own."
+      actions={
+        payload ? (
+          <div className="grid h-full gap-3 sm:grid-cols-2">
+            <div className="glass-panel rounded-[22px] px-4 py-4">
+              <p className="eyebrow">My projects</p>
+              <p className="display-title mt-3 text-3xl">{payload.myProjects.length}</p>
+            </div>
+            <div className="glass-panel rounded-[22px] px-4 py-4">
+              <p className="eyebrow">Ready for review</p>
+              <p className="display-title mt-3 text-3xl">{payload.readyForReview.length}</p>
+            </div>
+            <div className="glass-panel rounded-[22px] px-4 py-4">
+              <p className="eyebrow">Completed work</p>
+              <p className="display-title mt-3 text-3xl">{payload.completed.length}</p>
+            </div>
+            <div className="glass-panel rounded-[22px] px-4 py-4">
+              <p className="eyebrow">Overdue</p>
+              <p className="display-title mt-3 text-3xl">{payload.overdue.length}</p>
+            </div>
+          </div>
+        ) : null
+      }
       navItems={[...architectNavItems]}
     >
       {error ? <div className="glass-panel rounded-[28px] p-6 text-sm text-[#8f6532]">{error}</div> : null}
@@ -111,46 +129,36 @@ function ArchitectMyProjectsContent({ token, user }: { token: string; user: User
         </div>
       ) : (
         <div className="grid gap-6">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <MetricCard label="My projects" value={payload.myProjects.length} />
-            <MetricCard label="Ready for review" value={payload.readyForReview.length} />
-            <MetricCard label="Completed work" value={payload.completed.length} />
-            <MetricCard label="Overdue" value={payload.overdue.length} />
-          </div>
-
           <div className="glass-panel rounded-[24px] p-3">
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <div className="flex flex-wrap gap-2">
               {categoryTabs.map((tab) => (
                 <button
                   key={tab.id}
                   type="button"
                   onClick={() => handleCategoryToggle(tab.id)}
                   className={cn(
-                    "glass-tab flex min-w-0 w-full items-center justify-between gap-3 rounded-full px-4 py-3 text-xs uppercase tracking-[0.2em] transition",
+                    "flex min-w-0 max-w-full items-center gap-2 rounded-full border px-3 py-2 text-[10px] uppercase tracking-[0.14em] transition",
                     (tab.id === "all" && !selectedCategories.length) || selectedCategories.includes(tab.id)
-                      ? "border-[#c8a97e]/70 bg-white/90 text-[#2C2C2C] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_12px_24px_rgba(45,45,45,0.08)]"
-                      : "text-[#5d5d5d] hover:border-[#c8a97e]/60 hover:text-[#2C2C2C]",
+                      ? "border-[#c8a97e]/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(244,232,214,0.9))] text-[#2C2C2C] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_10px_20px_rgba(45,45,45,0.08)]"
+                      : "border-[#2c2c2c]/12 bg-[#2f2a26] text-[#faf8f4] hover:border-[#c8a97e]/55 hover:bg-[#3a342f]",
                   )}
                 >
-                  <span className="min-w-0 break-words pr-2 text-left leading-5">{tab.label}</span>
-                  <span className="rounded-full border border-black/8 bg-white/70 px-2 py-1 text-[10px] tracking-[0.18em] text-[#8f6532]">
+                  <span className="max-w-full break-words text-left leading-4">{tab.label}</span>
+                  <span
+                    className={cn(
+                      "rounded-full border px-2 py-0.5 text-[9px] tracking-[0.16em]",
+                      (tab.id === "all" && !selectedCategories.length) || selectedCategories.includes(tab.id)
+                        ? "border-black/8 bg-white/72 text-[#8f6532]"
+                        : "border-white/18 bg-white/10 text-[#f2ddc0]",
+                    )}
+                  >
                     {tab.count}
                   </span>
                 </button>
               ))}
             </div>
-          </div>
-
-          <div className="glass-panel rounded-[30px] p-6">
-            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-              <div>
-                <p className="eyebrow">Selected services</p>
-                <h2 className="display-title mt-4 text-3xl">{selectedCategorySummary}</h2>
-                <p className="mt-2 text-sm leading-7 text-[#5d5d5d]">
-                  Filter the projects you already claimed or were assigned by service category, without leaving your project board.
-                </p>
-              </div>
-              <span className="rounded-full border border-black/8 bg-white/72 px-4 py-2 text-xs uppercase tracking-[0.22em] text-[#8f6532]">
+            <div className="mt-3 flex items-center justify-end">
+              <span className="rounded-full border border-black/8 bg-white/72 px-4 py-2 text-[11px] uppercase tracking-[0.18em] text-[#8f6532]">
                 {filteredProjects.length} visible
               </span>
             </div>

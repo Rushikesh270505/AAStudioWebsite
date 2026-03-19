@@ -14,30 +14,30 @@ const faqItems: FaqItem[] = [
   {
     section: "Publishing",
     title: "How to post new work",
-    description: "Use this when the studio needs to open a new project for internal delivery or architect claiming.",
+    description: "Use this when the studio needs to open a new project record.",
     steps: [
       "Open Admin > Publish Work.",
-      "Enter the project title, location, service type, summary, and delivery status.",
-      "Attach the links or file references you want the architect to see in the brief.",
-      "Set the project priority and deadline carefully so it appears correctly in available works.",
-      "Save the project. If it is unassigned, it becomes visible in the architect available-works section.",
+      "Fill the project brief, service category, and delivery details.",
+      "Add the links or references the architect should see in the brief.",
+      "Set priority and deadline so it lands in the right queue.",
+      "Publish the work. If no architect is selected, it appears in Available Works.",
     ],
   },
   {
     section: "Assignments",
     title: "How to assign work to a specific architect",
-    description: "Use this when work should go directly to one architect instead of staying publicly claimable.",
+    description: "Use this when work should skip the open queue and go straight to one architect.",
     steps: [
-      "Open Admin > Publish Work or the existing project editor.",
-      "Choose the architect from the assignment field.",
-      "Save the project so it moves out of the unclaimed queue.",
-      "The architect will see it under My Projects after refresh or next login.",
+      "Open Admin > Publish Work.",
+      "Choose the service category first.",
+      "Pick the architect from the assignment field.",
+      "Publish the work. It moves directly into that architect's My Projects section.",
     ],
   },
   {
     section: "Meetings",
     title: "How to schedule a meeting",
-    description: "Create meetings once from the admin panel and let them appear automatically in architect and client workspaces.",
+    description: "Create meetings once and let them appear in the client and architect calendars.",
     steps: [
       "Open Admin > Meetings.",
       "Enter subject, date, time, description, and the Google Meet link.",
@@ -48,7 +48,7 @@ const faqItems: FaqItem[] = [
   {
     section: "Staff",
     title: "How to create a staff account",
-    description: "Use this to onboard a new architect with credentials chosen by the admin.",
+    description: "Use this to onboard a new architect with admin-set credentials.",
     steps: [
       "Open Admin > Staff.",
       "Fill username, email, password, phone, and architect ID.",
@@ -59,7 +59,7 @@ const faqItems: FaqItem[] = [
   {
     section: "Staff",
     title: "Archive vs terminate architect accounts",
-    description: "Archive preserves contact history; terminate permanently removes access and account data.",
+    description: "Archive keeps contact details. Terminate removes the account fully.",
     steps: [
       "Use Archive when you want to remove portal access but keep contact info for future reactivation.",
       "Archived architects move to the Archived list and can be reactivated by filling the remaining form details.",
@@ -70,7 +70,7 @@ const faqItems: FaqItem[] = [
   {
     section: "Workload",
     title: "How to review architect reports",
-    description: "Daily reports show the latest status update from each architect and support sign-out enforcement.",
+    description: "Use this to check the latest daily report from each architect.",
     steps: [
       "Open Admin > Workload.",
       "Review each architect card for the latest submitted report, images, and current online/offline state.",
@@ -80,7 +80,7 @@ const faqItems: FaqItem[] = [
   {
     section: "Client Operations",
     title: "How client meetings and updates flow",
-    description: "This explains what clients see after you assign projects or schedule milestones.",
+    description: "Use this to understand what clients receive after admin actions.",
     steps: [
       "Assigned projects appear in the client dashboard automatically.",
       "Meetings created in Admin > Meetings show up in the client Meetings section.",
@@ -90,7 +90,7 @@ const faqItems: FaqItem[] = [
   {
     section: "Inquiries",
     title: "How to handle website inquiries",
-    description: "Contact form submissions are stored and can be reviewed from the admin workspace.",
+    description: "Use this to review contact form leads from the website.",
     steps: [
       "Open Admin > Inquiries.",
       "Review the lead details, project type, and message submitted through the live website contact form.",
@@ -100,7 +100,7 @@ const faqItems: FaqItem[] = [
   {
     section: "Authentication",
     title: "How email OTP works for signup and forgot password",
-    description: "Production email OTP uses the configured SMTP sender in the backend.",
+    description: "Use this to check the email verification and reset flow.",
     steps: [
       "Public sign-up sends an email OTP before the account can be created.",
       "Forgot password also sends an OTP to the registered email address.",
@@ -128,7 +128,7 @@ export function AdminFaq() {
   return (
     <AdminShell
       title="Admin FAQ"
-      description="Search the studio process guide whenever you need a quick reminder for publishing, assigning, meetings, staff operations, or delivery flow."
+      description="Search the admin guide for the main studio actions."
     >
       {() => (
         <div className="grid gap-6">
@@ -139,7 +139,7 @@ export function AdminFaq() {
                 <input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search for post work, assign work, schedule meetings..."
+                  placeholder="Search post work, assign work, meetings..."
                   className="rounded-[22px] border border-black/10 bg-white/88 px-4 py-3 outline-none transition-colors focus:border-[#c8a97e]"
                 />
               </label>
