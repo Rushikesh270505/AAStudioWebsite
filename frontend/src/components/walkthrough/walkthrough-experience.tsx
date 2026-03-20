@@ -103,41 +103,157 @@ function WalkController() {
 }
 
 export function WalkthroughExperience() {
-  return (
-    <div className="grid gap-6 lg:grid-cols-[0.35fr_0.65fr]">
-      <div className="glass-panel rounded-[32px] p-6 md:p-8">
-        <p className="eyebrow">Luxury 3BHK walkthrough</p>
-        <h3 className="display-title mt-4 text-3xl md:text-4xl">Walk through a warm, hotel-inspired 3BHK in first person</h3>
-        <p className="mt-4 text-sm leading-7 text-[#5d5d5d]">
-          This interactive walkthrough now stages a premium three-bedroom residence with marble flooring, soft beige paneling, tailored bedrooms, dining, living, and spa-style bath zones inspired by your reference mood.
-        </p>
+  const routeStops = [
+    {
+      title: "Living lounge",
+      detail: "Start in the open lounge and orient yourself to the central circulation spine.",
+    },
+    {
+      title: "Dining gallery",
+      detail: "Move left toward the warm marble dining zone and chandelier-led family setting.",
+    },
+    {
+      title: "Master bedroom",
+      detail: "Continue deeper into the suite with layered upholstery, wardrobe walls, and cove lighting.",
+    },
+    {
+      title: "Kids room",
+      detail: "Turn into the lighter secondary room with softer styling and playful study details.",
+    },
+    {
+      title: "Bathrooms",
+      detail: "Finish in the spa-like bathrooms with backlit mirrors, stone textures, and glass shower zones.",
+    },
+  ];
 
-        <div className="mt-6 grid gap-3">
-          <div className="rounded-[24px] border border-black/8 bg-white/65 p-4">
-            <p className="text-xs uppercase tracking-[0.24em] text-[#8f6532]">Spaces</p>
-            <p className="mt-2 text-sm leading-7 text-[#3d3d3d]">Move from living and dining into the bedroom suites and bathrooms to review circulation, lighting, and the overall atmosphere of the residence.</p>
+  const controlItems = [
+    { key: "W / S", label: "Move forward and backward" },
+    { key: "A / D", label: "Strafe left and right" },
+    { key: "Mouse", label: "Look around once the cursor is locked" },
+    { key: "Esc", label: "Release the cursor from the walkthrough" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="glass-panel rounded-[34px] p-6 md:p-8">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,0.64fr)_minmax(320px,0.36fr)] lg:items-start">
+          <div>
+            <p className="eyebrow">Luxury 3BHK walkthrough</p>
+            <h3 className="display-title mt-4 text-3xl md:text-5xl">
+              Walk a warmer, more dressed 3BHK with guided circulation through every key room
+            </h3>
+            <p className="mt-4 max-w-3xl text-sm leading-7 text-[#5d5d5d] md:text-base">
+              The walkthrough now centers the playable residence and stages a more polished interior palette:
+              richer decor, stronger light contrast, cleaner reflections, and a guided route through the living
+              room, dining zone, master bedroom, kids room, and spa-inspired bathrooms.
+            </p>
           </div>
-          <div className="rounded-[24px] border border-black/8 bg-white/65 p-4">
-            <p className="text-xs uppercase tracking-[0.24em] text-[#8f6532]">Controls</p>
-            <p className="mt-2 text-sm leading-7 text-[#3d3d3d]">W / S move forward and backward, A / D strafe, and mouse look activates after locking the cursor inside the scene.</p>
+
+          <div className="rounded-[28px] border border-black/8 bg-white/62 p-5 shadow-[0_24px_64px_rgba(44,44,44,0.08)] backdrop-blur-xl">
+            <p className="text-xs uppercase tracking-[0.24em] text-[#8f6532]">Route preview</p>
+            <div className="mt-4 space-y-3">
+              {routeStops.map((stop, index) => (
+                <div
+                  key={stop.title}
+                  className="rounded-[22px] border border-black/6 bg-[#fbf8f2]/75 px-4 py-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-7 items-center justify-center rounded-full border border-[#d8c8b4] bg-[#f4ece1] text-[11px] font-medium text-[#7f5c38]">
+                      {index + 1}
+                    </span>
+                    <p className="text-sm font-medium text-[#2f2a25]">{stop.title}</p>
+                  </div>
+                  <p className="mt-2 text-xs leading-6 text-[#62574b]">{stop.detail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="glass-panel rounded-[36px] p-4 md:p-5">
+        <div className="mx-auto max-w-[1220px]">
+          <div className="overflow-hidden rounded-[30px] border border-black/7 bg-[#e1d6c7]/60 shadow-[0_36px_80px_rgba(44,44,44,0.12)]">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-black/6 bg-white/45 px-5 py-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.24em] text-[#8f6532]">Playable residence</p>
+                <p className="mt-1 text-sm text-[#5b5147]">
+                  Centered first-person engine with guided 3BHK room progression.
+                </p>
+              </div>
+              <div className="rounded-full border border-black/8 bg-white/65 px-4 py-2 text-xs uppercase tracking-[0.18em] text-[#7f5d39]">
+                Living • Dining • Master • Kids • Bath
+              </div>
+            </div>
+
+            <div className="h-[520px] md:h-[620px] xl:h-[700px]">
+              <Canvas shadows camera={{ fov: 72, position: [0, 1.65, 11.5] }}>
+                <Luxury3BHKScene />
+                <WalkController />
+              </Canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,0.44fr)_minmax(0,0.56fr)]">
+        <div className="glass-panel rounded-[30px] p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="eyebrow">Controls</p>
+              <h4 className="mt-3 font-display text-3xl leading-none text-[#2c2c2c]">Move through the home</h4>
+              <p className="mt-3 max-w-xl text-sm leading-7 text-[#5e574f]">
+                Launch the walkthrough, click inside the residence, and use the controls below to move through the
+                route without leaving the centered engine.
+              </p>
+            </div>
+
+            <button
+              id="walkthrough-launch"
+              type="button"
+              className="premium-button px-5 py-3 text-sm font-medium shadow-[0_18px_36px_rgba(44,44,44,0.14)]"
+            >
+              Launch walkthrough
+            </button>
+          </div>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            {controlItems.map((item) => (
+              <div
+                key={item.key}
+                className="rounded-[24px] border border-black/8 bg-white/62 px-4 py-4 shadow-[0_18px_40px_rgba(44,44,44,0.06)]"
+              >
+                <p className="text-xs uppercase tracking-[0.24em] text-[#8f6532]">{item.key}</p>
+                <p className="mt-2 text-sm leading-6 text-[#38322d]">{item.label}</p>
+              </div>
+            ))}
           </div>
         </div>
 
-        <button
-          id="walkthrough-launch"
-          type="button"
-          className="premium-button mt-6 px-5 py-3 text-sm font-medium"
-        >
-          Click here, then click inside the residence
-        </button>
-      </div>
+        <div className="glass-panel rounded-[30px] p-6">
+          <p className="eyebrow">Guided path</p>
+          <h4 className="mt-3 font-display text-3xl leading-none text-[#2c2c2c]">Suggested walkthrough order</h4>
+          <p className="mt-3 text-sm leading-7 text-[#5e574f]">
+            Follow the glowing path markers inside the 3D engine. They quietly lead you from the public living
+            zones into the more private bedroom and bathroom suites.
+          </p>
 
-      <div className="glass-panel overflow-hidden rounded-[32px] p-3">
-        <div className="h-[560px] overflow-hidden rounded-[26px] bg-[#d8d0c5]">
-          <Canvas shadows camera={{ fov: 72, position: [0, 1.65, 11.5] }}>
-            <Luxury3BHKScene />
-            <WalkController />
-          </Canvas>
+          <div className="mt-6 space-y-3">
+            {routeStops.map((stop, index) => (
+              <div
+                key={stop.title}
+                className="flex gap-4 rounded-[24px] border border-black/7 bg-white/62 px-4 py-4 shadow-[0_18px_40px_rgba(44,44,44,0.06)]"
+              >
+                <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full border border-[#d7c3ab] bg-[#f3eadf] text-[11px] font-medium text-[#7f5a35]">
+                  {index + 1}
+                </span>
+                <div>
+                  <p className="text-sm font-medium text-[#302a25]">{stop.title}</p>
+                  <p className="mt-1 text-xs leading-6 text-[#62574b]">{stop.detail}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
